@@ -540,11 +540,12 @@ SUB moveAstronauts
 		' CHECK IF THEY COLLIDED WITH PLAYER, AND REMOVE FROM LIST!
 		IF ABS(player.x - astronauts(i).x) < 5 AND ABS(player.y - astronauts(i).y) < 5 THEN
 		
-			PLAY "MBO4GGB" ' GOOD SOUND
+			PLAY "MBO2L8CFG" ' pickup sound
+			
 			player.score = player.score + 1
 			
 			if ACTIVEASTRONAUTS > 0 then 
-				astronauts(i) = astronauts(ACTIVEASTRONAUTS)
+				astronauts(i) = astronauts(ACTIVEASTRONAUTS-1)
 				ACTIVEASTRONAUTS = ACTIVEASTRONAUTS - 1
 				EXIT SUB
 			else 
