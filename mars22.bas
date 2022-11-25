@@ -15,9 +15,9 @@ DECLARE SUB drawPlayer ()
 ' ONLY TESTED IN DOSBOX AND QB45
 ' ------------------------------------------
 ' Some tech info:
-' I use mode 7, that has 16 EGA colors and 
+' I use mode 7, that has 16 EGA colors and
 ' many video pages.
-' I use page 2 for background 
+' I use page 2 for background
 ' I use page 1 for drawing
 ' I use page 0 to show
 ' This avoids flicker
@@ -32,7 +32,10 @@ DIM looptempo AS LONG
 DIM loopfor AS LONG
 looptempo = 0
 
-'colors
+' mars map height map
+DIM SHARED mapH(320) AS INTEGER
+
+'colors of mars map
 DIM SHARED skyBG
 DIM SHARED marsFG
 DIM SHARED starsFG
@@ -54,15 +57,17 @@ TYPE PLAYERtype
 	spdx AS SINGLE ' speed x
 	spdy AS SINGLE ' speed y
 	
-	mdx as single ' max speed x
-	mdy as single ' max speed y
+	mdx AS SINGLE ' max speed x
+	mdy AS SINGLE ' max speed y
 	
-	grav as SINGLE ' gravity
+	grav AS SINGLE ' gravity
 	
 	fuel AS SINGLE
 
 	score AS INTEGER
 	life AS INTEGER
+
+	onGround AS INTEGER ' player on ground?
 END TYPE
 
 ' game stuff
@@ -74,7 +79,7 @@ DIM SHARED player AS PLAYERtype
 SCREEN 0
 CLS
 COLOR 7, 0
-PRINT "Wait please..."
+PRINT "Wait please...loading game!"
 CALL MeasureCPU
 PRINT CPUtempo
 
@@ -82,8 +87,15 @@ PRINT CPUtempo
 RANDOMIZE TIMER
 SCREEN 7
 
+DO   ' whole game loop
+
 ' intro
 CALL IntroScreen
+
+CLS
+COLOR 15
+PRINT "TRAVELING TO MARS SURFACE!"
+PRINT "PLEASE WAIT..."
 
 CALL initGame
 
@@ -91,61 +103,105 @@ CALL initGame
 CALL initLevel
 
 ' main game loop of a level
+wannaExit = 0 ' wait for ESC key
 DO
-	'keyboard 
-	D$ = UCASE$(INKEY$)
+	'keyboard
+	d$ = UCASE$(INKEY$)
+
+	IF d$ = CHR$(27) THEN wannaExit = 1
 
 	' left
-	IF D$ = CHR$(0) + "K" OR D$ = "A" THEN player.dx = player.dx - player.spdx 
+	IF d$ = CHR$(0) + "K" OR d$ = "A" THEN player.dx = player.dx - player.spdx
 	
 	' right
-	IF D$ = CHR$(0) + "M" OR D$ = "D" THEN player.dx = player.dx + player.spdx
+	IF d$ = CHR$(0) + "M" OR d$ = "D" THEN player.dx = player.dx + player.spdx
 		
 	' up
-	IF D$ = CHR$(0) + "H" OR D$ = "A" THEN player.dy = player.dy - player.spdy
+	IF d$ = CHR$(0) + "H" OR d$ = "W" THEN player.dy = player.dy - player.spdy
 	
 	' down
-	IF D$ = CHR$(0) + "P" OR D$ = "D" THEN player.dy = player.dy + player.spdy
+	IF d$ = CHR$(0) + "P" OR d$ = "S" THEN player.dy = player.dy + player.spdy
 		
-	
-
 	' move
-	player.x = player.x + player.dx 
-	player.y = player.y + player.dy 
+	IF player.onGround = 0 THEN player.x = player.x + player.dx
+   
+	player.y = player.y + player.dy
 
 	' gravity
 	player.dy = player.dy + player.grav
 
 	' constrain
-	if player.dx < -player.mdx then player.dx = -player.mdx
-	if player.dx > player.mdx then player.dx = player.mdx
-	if player.dy < -player.mdy then player.dy = -player.mdy
-	if player.dy > player.mdy then player.dy = player.mdy
+	IF player.dx < -player.mdx THEN player.dx = -player.mdx
+	IF player.dx > player.mdx THEN player.dx = player.mdx
+	IF player.dy < -player.mdy THEN player.dy = -player.mdy
+	IF player.dy > player.mdy THEN player.dy = player.mdy
 
-	if player.x < 0 then player.x = 0
-	if player.x > 314 then player.x = 314
+	IF player.x < 0 THEN
+		player.x = 0
+		player.dx = 0
+	END IF
+   
+	IF player.x > 314 THEN
+		player.x = 314
+		player.dx = 0
+	END IF
 
-	if player.y < 0 then player.y = 0
-	if player.y > 193 then player.y = 193
+	IF player.y < 0 THEN
+		player.y = 0
+		player.dy = 0
+	END IF
 
-	' draw off screen	
-	SCREEN , , 1 , 0
-	PCOPY 2,1 ' copy background
+	IF player.y > 193 THEN
+		player.y = 193
+		player.dx = 0
+	END IF
+
+	' friction
+	IF player.dx < 0 THEN player.dx = player.dx + player.grav
+	IF player.dx > 0 THEN player.dx = player.dx - player.grav
+	IF ABS(player.dx) < player.grav THEN player.dx = 0
+
+	'check crash against ground first
+	IF mapH(player.x + 3) <= player.y + 7 THEN
+	  ' touched ground
+	  player.y = mapH(player.x + 3) - 7
+	  player.dy = 0
+	  player.dx = 0
+
+	  ' debug check crash!
+	  player.onGround = 1 'prevent X movement
+	ELSE
+		player.onGround = 0
+	END IF
+
+
+	' drawing game frame
+	' draw off screen  
+	SCREEN , , 1, 0
+	PCOPY 2, 1' copy background
+
+	' do player
 	CALL drawPlayer
+	
+	' HUD
+	LOCATE 1, 1
+	PRINT USING "> Fuel #### --- Life## --- Score#####"; player.fuel; player.life; player.score
+	LOCATE 2, 1
+	PRINT USING "> dx##.# dy##.#"; player.dx; player.dy
+	IF player.onGround THEN PRINT "* LANDED *"
 
 	' flip page
 	PCOPY 1, 0
-	SCREEN , , 0,0
+	SCREEN , , 0, 0
 	
 	' --- high resolution timer simulation
 	' measure time and pause to slow down game frames
-	'Pausar
 	idle2 = TIMER
 	IF tempoRatio = 0 THEN tempoRatio = 1 'self adjust
 	IF tempoRatio > 5000 THEN tempoRatio = 5000
 	looptempo = CPUtempo / tempoRatio
 	FOR loopfor = 0 TO looptempo
-		'Hacer algo aqui, sino funciona muy rapido
+		'do something to slow down cpu , useless stuff,
 		idle = idle + 1
 		idle = 0
 		idle = loopfor
@@ -156,7 +212,9 @@ DO
 	IF ABS(TIMER - idle2) > .02 THEN tempoRatio = tempoRatio + 1 ' speed up
 
 
-LOOP
+LOOP WHILE wannaExit <> 1
+
+LOOP ' big game loop with menus and all
 
 
 '---------- end ------------
@@ -189,6 +247,19 @@ NEXT
 					   
 PAINT (0, 199), marsFG
 
+
+' scan map height
+FOR x = 0 TO 320
+	FOR y = 99 TO 199
+		LET c = POINT(x, y)
+		IF c = marsFG THEN
+			mapH(x) = y
+			EXIT FOR
+		END IF
+	NEXT
+NEXT
+
+
 END SUB
 
 SUB drawPlayer
@@ -200,6 +271,16 @@ SUB drawPlayer
 
 	'bounding box is x + 6, y  + 7
 	'LINE (player.x, player.y)-(player.x + 6, player.y + 7), 15, B
+
+   ' ---------------------
+   ' draw fire from boosters
+   IF player.dy < 0 THEN
+	  FOR i = 0 TO 2 + ABS(INT(player.dy))
+		PSET (player.x + RND * 6, player.y + 7 + RND * (3 + ABS(INT(player.dy)))), 14
+	  NEXT
+   END IF
+
+
 END SUB
 
 SUB initGame
@@ -211,13 +292,13 @@ SUB initGame
 	player.dx = 0
 	player.dy = 0
 	
-	player.spdx = 0.5
-	player.spdy = 0.5
+	player.spdx = .5
+	player.spdy = .6
 	
-	player.grav = 0.2
+	player.grav = .1
 	
 	player.mdx = 3
-	player.mdy = 5
+	player.mdy = 3
 	
 	player.fuel = 3000
 	player.score = 0
@@ -234,13 +315,14 @@ SUB initLevel
 	player.dy = 0
 	player.fuel = 3000
 	
-	
+	player.onGround = 0 ' not on ground  
+   
 	' draw mars off screen
-	' active page 2,view page 0 
+	' active page 2,view page 0
 	SCREEN , , 2, 0 ' page 2 has the background in cache
- 	CALL createMars
-	pcopy 2, 1 ' i keep another copy in 1 to double buffer
-	pcopy 1, 0 ' show to screen 
+	CALL createMars
+	PCOPY 2, 1 ' i keep another copy in 1 to double buffer
+	PCOPY 1, 0 ' show to screen
 	SCREEN , , 0, 0
 END SUB
 
@@ -280,6 +362,9 @@ PRINT
 PRINT "USE ARROW KEYS TO FIRE THRUSTERS"
 COLOR 12
 PRINT "DO NOT COLLIDE AGAINST MARS SURFACE"
+COLOR 10
+PRINT "RESCUE ALL THE ASTRONAUTS!"
+
 COLOR 14
 
 PRINT
@@ -287,11 +372,33 @@ PRINT
 
 PRINT
 PRINT
-PRINT
-PRINT "-- PRESS ANY KEY --"
 
-k$ = waitForKey$
+PRINT "-- PRESS ANY KEY  --"
+COLOR 4
+PRINT "-- OR ESC TO EXIT --"
+COLOR 15
 
+K$ = waitForKey$
+
+IF K$ = CHR$(27) THEN
+SCREEN 0
+WIDTH 80, 25
+COLOR 12
+PRINT "THANKS FOR PLAYING!"
+		   
+COLOR 15
+PRINT "By ";
+COLOR 11
+PRINT "KRO";
+COLOR 15
+PRINT "NO";
+COLOR 11
+PRINT "MAN";
+COLOR 15
+PRINT " - (c) 2022"
+
+END
+END IF
 
 
 END SUB
@@ -310,10 +417,10 @@ END SUB
 
 FUNCTION waitForKey$
 DO
-	k$ = INKEY$
-LOOP UNTIL k$ <> ""
+	K$ = INKEY$
+LOOP UNTIL K$ <> ""
 
-waitForKey$ = k$
+waitForKey$ = K$
 
 END FUNCTION
 
