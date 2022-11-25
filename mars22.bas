@@ -1,5 +1,6 @@
+DECLARE SUB resetPlayer ()
+DECLARE SUB drawIntroLevel ()
 DECLARE SUB setupAstronauts ()
-DECLARE SUB drawAstronauts ()
 DECLARE SUB moveAstronauts ()
 DECLARE SUB createMars ()
 DECLARE FUNCTION waitForKey$ ()
@@ -36,7 +37,7 @@ DIM loopfor AS LONG
 looptempo = 0
 
 ' mars map height map
-DIM SHARED mapH(320) AS INTEGER
+DIM SHARED mapH(325) AS INTEGER
 
 'colors of mars map
 DIM SHARED skyBG
@@ -65,7 +66,8 @@ TYPE PLAYERtype
 	
 	grav AS SINGLE ' gravity
 	
-	fuel AS SINGLE
+	fuel AS INTEGER
+	oxygen AS INTEGER
 
 	score AS INTEGER
 	life AS INTEGER
@@ -118,22 +120,39 @@ currentWave = currentWave + 1
 
 CLS
 COLOR 15
+
+' star field
+FOR s = 0 TO 100
+	x = RND * 320
+	y = RND * 200
+	PSET (x, y), starsFG
+NEXT
+
 PRINT "TRAVELING TO MARS SURFACE!"
-PRINT USING "WAVE ##"; currentWave
+PRINT USING "MARS CREW ##"; currentWave
 PRINT
 COLOR 12
-PRINT "PLEASE WAIT..."
+LOCATE 23, 1
+PRINT "PLEASE WAIT...FLYING TO ZONE"
 COLOR 15
 
+CALL drawIntroLevel
+
+' wait
+k$ = INKEY$
+SLEEP 3
+
+' -- start level --
 ' game level setup
 CALL initLevel
 
 ' init astronauts
 CALL setupAstronauts
 
+
 ACTIVEASTRONAUTS = 3 + currentWave ' ADD MORE EACH WAVE!
 IF ACTIVEASTRONAUTS > MAXASTRONAUTS THEN
-	' DEBUG!
+	' DEBUG - add proper win screen!
 	CLS
 	PRINT "YOU WON THE GAME!"
 	END
@@ -148,11 +167,17 @@ DO
 	IF d$ = CHR$(27) THEN wannaExit = 1
 
 	' left
-	IF d$ = CHR$(0) + "K" OR d$ = "A" THEN player.dx = player.dx - player.spdx
-	
+	IF d$ = CHR$(0) + "K" OR d$ = "A" THEN
+		player.dx = player.dx - player.spdx
+		player.fuel = player.fuel - 1
+	END IF
+
 	' right
-	IF d$ = CHR$(0) + "M" OR d$ = "D" THEN player.dx = player.dx + player.spdx
-		
+	IF d$ = CHR$(0) + "M" OR d$ = "D" THEN
+		player.dx = player.dx + player.spdx
+		player.fuel = player.fuel - 1
+	END IF
+   
 	' up
 	IF d$ = CHR$(0) + "H" OR d$ = "W" THEN
 		player.dy = player.dy - player.spdy
@@ -163,6 +188,7 @@ DO
 	IF d$ = CHR$(0) + "P" OR d$ = "S" THEN player.dy = player.dy + player.spdy
 		
 	' move
+	' only if not grounded on x
 	IF player.onGround = 0 THEN player.x = player.x + player.dx
    
 	player.y = player.y + player.dy
@@ -174,15 +200,15 @@ DO
 	IF player.dx < -player.mdx THEN player.dx = -player.mdx
 	IF player.dx > player.mdx THEN player.dx = player.mdx
 	IF player.dy < -player.mdy THEN player.dy = -player.mdy
-	IF player.dy > player.mdy THEN player.dy = player.mdy
+	IF player.dy > player.mdy * 2 THEN player.dy = player.mdy * 2'can fall twice max speed Y
 
 	IF player.x < 0 THEN
 		player.x = 0
 		player.dx = 0
 	END IF
    
-	IF player.x > 314 THEN
-		player.x = 314
+	IF player.x > 312 THEN
+		player.x = 312
 		player.dx = 0
 	END IF
 
@@ -191,9 +217,9 @@ DO
 		player.dy = 0
 	END IF
 
-	IF player.y > 193 THEN
-		player.y = 193
-		player.dx = 0
+	IF player.y > 194 THEN
+		player.y = 194
+		'player.dy = 0
 	END IF
 
 	' friction
@@ -202,43 +228,73 @@ DO
 	IF ABS(player.dx) < player.grav THEN player.dx = 0
 
 	'check crash against ground first
-	IF mapH(player.x + 3) <= player.y + 7 THEN
+	'CHECK ALL CORNERS AND MIDDLE POINT!
+	mapmH = mapH(player.x + 3)'look highest point below us in left,right,middle
+	IF mapH(player.x) < mapmH THEN mapmH = mapH(player.x)
+	IF mapH(player.x + 6) < mapmH THEN mapmH = mapH(player.x + 6)
+
+	IF mapmH <= player.y + 7 THEN
 	  ' touched ground
-	  player.y = mapH(player.x + 3) - 7
-	  player.dy = 0
-	  player.dx = 0
+	  player.y = mapmH - 7 'clip to ground to dont go below
+	 
+	  'slide in big slopes
+	  IF mapH(player.x) > player.y + 10 THEN player.x = player.x - .2
+	  IF mapH(player.x + 6) > player.y + 10 THEN player.x = player.x + .2
 
-	  IF player.onGround = 0 THEN SOUND 100, 1 ' sound only on first touch down
-
-	  ' debug check crash!
-	  player.onGround = 1 'prevent X movement
-
+	  IF player.onGround = 0 THEN 'touched ground from flying down
+		SOUND 100, 1 ' sound only on first touch down
+	   
+		' check crash!
+		IF player.dy > player.mdy THEN
+		   'debug add crash message and sound
+		   LOCATE player.y / 8 - 1, player.x / 8 + 1
+		   COLOR 12
+		   PRINT "CRASH!!"
+		   CIRCLE (player.x + 3, player.y + 4), 10, 12
+		   PAINT (player.x + 3, player.y + 4), 12
+		   PLAY "MFO3GGFCCo2C"
+		   player.life = player.life - 1
+		   ' debug check if life less than 0 then game over
+		   CALL resetPlayer
+		ELSE
+		  player.dy = 0
+		  player.dx = 0
+		  player.onGround = 1 'prevent X movement
+		END IF
+	  END IF
 	ELSE
-		player.onGround = 0
+		player.onGround = 0 ' im flying
 	END IF
 
-	' astronauts AI
-	CALL moveAstronauts
+	'oxygen
+	player.oxygen = player.oxygen - 1
 
 	' drawing game frame
 	' draw off screen
 	SCREEN , , 1, 0
 	PCOPY 2, 1' copy background
 
-	' do astronauts
-	CALL drawAstronauts
+	' astronauts AI AND DRAWING (1 PASS)
+	CALL moveAstronauts
 
 	' do player
 	CALL drawPlayer
 	
 	' HUD
+	COLOR 15
 	LOCATE 1, 1
-	PRINT USING "> Fuel ### --- Life## --- Score#####"; player.fuel; player.life; player.score
+	IF player.fuel < 25 OR player.oxygen < 200 THEN COLOR 12 ' low fuel or oxygen
+	PRINT USING ">Fuel####|Oxygen####|Score####|Life##"; player.fuel; player.oxygen; player.score; player.life
 	LOCATE 2, 1
+	COLOR 15
 	IF player.onGround THEN
-		PRINT "> * LANDED *"
+		COLOR 10
+		PRINT ">* LANDED *<"
 	ELSE
-		PRINT USING "> dx##.# dy##.#"; player.dx; player.dy
+		COLOR 15
+		IF player.dy > player.mdy THEN COLOR 12 'going to crash, warn!
+		IF player.dy > 0 AND player.dy <= player.mdy THEN COLOR 10 'good landing speed
+		PRINT USING ">dx##.# dy##.#<"; player.dx; player.dy
 	END IF
 
 	' flip page
@@ -257,10 +313,10 @@ DO
 		idle = 0
 		idle = loopfor
 	NEXT
-	  
 	 
 	IF ABS(TIMER - idle2) < .02 THEN tempoRatio = tempoRatio - 1 ' slow down
 	IF ABS(TIMER - idle2) > .02 THEN tempoRatio = tempoRatio + 1 ' speed up
+	' end temporizer
 
 ' loop #3
 LOOP WHILE ACTIVEASTRONAUTS > 0 AND wannaExit <> 1
@@ -284,6 +340,7 @@ SUB createMars
 ' creates mars background
 LINE (0, 0)-(320, 200), skyBG, BF
 
+' star field
 FOR s = 0 TO 100
 	x = RND * 320
 	y = RND * 200
@@ -292,20 +349,21 @@ NEXT
 
 LET y = RND * 50 + 100
 LET y2 = RND * 50 + 100
-LET segment = 8
+LET segment = 6
 
 FOR x = 0 TO 320 STEP segment
   
 	LINE (x, y)-(x + segment, y2), marsFG
   
 	y = y2
-	y2 = y + (RND * 20 - 10)
+	y2 = y + (RND * 40 - 20)
 
 	IF y2 < 100 THEN y2 = 100
 	IF y2 > 198 THEN y2 = 198
   
 NEXT
-					   
+					  
+' fill
 PAINT (0, 199), marsFG
 
 
@@ -319,46 +377,36 @@ FOR x = 0 TO 320
 		END IF
 	NEXT
 NEXT
-
-
+'bugfix
+mapH(320) = 200
+mapH(321) = 200
+mapH(322) = 200
+mapH(323) = 200
+mapH(324) = 200
+mapH(325) = 200
 END SUB
 
-SUB drawAstronauts
-	FOR i = 0 TO ACTIVEASTRONAUTS - 1
-		LINE (astronauts(i).x + 2, astronauts(i).y)-(astronauts(i).x + 2, astronauts(i).y + 1), 11
-		
-		LINE (astronauts(i).x + 2, astronauts(i).y + 2)-(astronauts(i).x + 2, astronauts(i).y + 3), 3
-		
-		' animate
-		IF astronauts(i).frame < 10 THEN
-			
-			
-			' arms
-			LINE (astronauts(i).x, astronauts(i).y)-(astronauts(i).x + 1, astronauts(i).y + 1), 3
-			
-			LINE (astronauts(i).x + 3, astronauts(i).y + 1)-(astronauts(i).x + 4, astronauts(i).y), 3
-			
-			'legs
-			LINE (astronauts(i).x, astronauts(i).y + 5)-(astronauts(i).x + 1, astronauts(i).y + 4), 3
-			
-			LINE (astronauts(i).x + 3, astronauts(i).y + 4)-(astronauts(i).x + 4, astronauts(i).y + 5), 3
-			
-		ELSE
-			
-			' arms
-			LINE (astronauts(i).x, astronauts(i).y + 2)-(astronauts(i).x + 1, astronauts(i).y + 1), 3
-			
-			LINE (astronauts(i).x + 3, astronauts(i).y + 1)-(astronauts(i).x + 4, astronauts(i).y + 2), 3
-			
-			'legs
-			LINE (astronauts(i).x + 1, astronauts(i).y + 5)-(astronauts(i).x + 1, astronauts(i).y + 4), 3
-			
-			LINE (astronauts(i).x + 3, astronauts(i).y + 4)-(astronauts(i).x + 3, astronauts(i).y + 5), 3
-		END IF
-
-		astronauts(i).frame = astronauts(i).frame + RND * 3
-		IF astronauts(i).frame > 20 THEN astronauts(i).frame = 0
-	NEXT
+SUB drawIntroLevel
+' intro screen to a new level
+' mars planet
+CIRCLE (160, 100), 80, 4
+PAINT (160, 100), 4
+' mars dots
+FOR s = 0 TO 100
+	x = RND * 100 - 50
+	y = RND * 100 - 50
+	x = 160 - x
+	y = 100 - y
+	PSET (x, y), 6
+	IF RND * 50 > 40 THEN CIRCLE (x, y), 1, 6
+NEXT
+' mars crew location on planet
+x = RND * 100 - 50
+y = RND * 100 - 50
+x = 160 - x
+y = 100 - y
+LINE (x - 3, y - 3)-(x + 3, y + 3), 15, B
+LINE (100, 12)-(x, y - 3), 15
 
 END SUB
 
@@ -387,11 +435,6 @@ SUB initGame
 	' each new game call this
 	
 	'player init
-	player.x = 160
-	player.y = 0
-	player.dx = 0
-	player.dy = 0
-	
 	player.spdx = .5
 	player.spdy = .6
 	
@@ -399,23 +442,15 @@ SUB initGame
 	
 	player.mdx = 3
 	player.mdy = 3
-	
-	player.fuel = 3000
+   
 	player.score = 0
 	player.life = 3
+	'all other vars are set in resetPlayer
 END SUB
 
 SUB initLevel
 	' each new level call this
-	
-	' player reset for level
-	player.x = 160
-	player.y = 0
-	player.dx = 0
-	player.dy = 0
-	player.fuel = 300
-	
-	player.onGround = 0 ' not on ground
+	CALL resetPlayer
    
 	' draw mars off screen
 	' active page 2,view page 0
@@ -450,7 +485,7 @@ PRINT " - (c) 2022"
 COLOR 14
 PRINT
 PRINT
-PRINT "THE CREW OF THE FIRST MARS EXPLORER"
+PRINT "THE CREW OF THE FIRST MARS BASE"
 PRINT "IS STRANDED ON THE SURFACE"
 PRINT
 PRINT "THEIR ONLY HOPE IS YOU!"
@@ -480,9 +515,9 @@ COLOR 4
 PRINT "-- OR ESC TO EXIT --"
 COLOR 15
 
-K$ = waitForKey$
+k$ = waitForKey$
 
-IF K$ = CHR$(27) THEN
+IF k$ = CHR$(27) THEN
 SCREEN 0
 WIDTH 80, 25
 COLOR 12
@@ -518,12 +553,24 @@ SUB MeasureCPU
 END SUB
 
 SUB moveAstronauts
+	'NOTE: i also moved the draw code here to sped up loops
+	'only 1 pass over astronaut list, instead of 2
+   
 	' IA of astronauts
 	
 	FOR i = 0 TO ACTIVEASTRONAUTS - 1
+	   
 		' constraint to screen
-		IF astronauts(i).x < 5 THEN astronauts(i).x = 5
-		IF astronauts(i).x > 315 THEN astronauts(i).x = 315
+		IF astronauts(i).x < 5 THEN
+			astronauts(i).x = 5
+			astronauts(i).dx = -astronauts(i).dx
+		END IF
+	   
+		IF astronauts(i).x > 315 THEN
+			astronauts(i).x = 315
+			astronauts(i).dx = -astronauts(i).dx
+		END IF
+
 		IF astronauts(i).y < 0 THEN astronauts(i).y = 0
 		IF astronauts(i).y > 194 THEN astronauts(i).y = 194
 		
@@ -544,8 +591,12 @@ SUB moveAstronauts
 			PLAY "MBO2L8CFG" ' pickup sound
 			
 			player.score = player.score + 1
-			
-			IF ACTIVEASTRONAUTS > 0 THEN
+		   
+			'GIVE MORE FUEL and OXIGEN!
+			player.oxygen = player.oxygen + RND * 100 + 50
+			player.fuel = player.fuel + RND * 25 + 5
+
+			IF ACTIVEASTRONAUTS > 0 THEN ' remove from list
 				astronauts(i) = astronauts(ACTIVEASTRONAUTS - 1)
 				ACTIVEASTRONAUTS = ACTIVEASTRONAUTS - 1
 				EXIT SUB
@@ -575,7 +626,51 @@ SUB moveAstronauts
 		   astronauts(i).ia = astronauts(i).ia - 1
 		END IF
 		
+
+		'-- draw code for astronaut (i)
+		LINE (astronauts(i).x + 2, astronauts(i).y)-(astronauts(i).x + 2, astronauts(i).y + 3), 11
+	   
+		'LINE (astronauts(i).x + 2, astronauts(i).y + 2)-(astronauts(i).x + 2, astronauts(i).y + 3), 3
+	   
+		' animate
+		IF astronauts(i).frame < 10 THEN
+			' arms
+			LINE (astronauts(i).x, astronauts(i).y)-(astronauts(i).x + 1, astronauts(i).y + 1), 3
+		   
+			LINE (astronauts(i).x + 3, astronauts(i).y + 1)-(astronauts(i).x + 4, astronauts(i).y), 3
+		   
+			'legs
+			LINE (astronauts(i).x, astronauts(i).y + 5)-(astronauts(i).x + 1, astronauts(i).y + 4), 3
+		   
+			LINE (astronauts(i).x + 3, astronauts(i).y + 4)-(astronauts(i).x + 4, astronauts(i).y + 5), 3
+		   
+		ELSE
+			' arms
+			LINE (astronauts(i).x, astronauts(i).y + 2)-(astronauts(i).x + 1, astronauts(i).y + 1), 3
+		   
+			LINE (astronauts(i).x + 3, astronauts(i).y + 1)-(astronauts(i).x + 4, astronauts(i).y + 2), 3
+		   
+			'legs
+			LINE (astronauts(i).x + 1, astronauts(i).y + 5)-(astronauts(i).x + 1, astronauts(i).y + 4), 3
+		   
+			LINE (astronauts(i).x + 3, astronauts(i).y + 4)-(astronauts(i).x + 3, astronauts(i).y + 5), 3
+		END IF
+
+		astronauts(i).frame = astronauts(i).frame + RND * 3
+		IF astronauts(i).frame > 20 THEN astronauts(i).frame = 0
+
 	NEXT
+END SUB
+
+SUB resetPlayer
+	' player reset for level OR LIFE LOSS
+	player.x = 160
+	player.y = 0
+	player.dx = 0
+	player.dy = 0
+	player.fuel = 300
+	player.oxygen = 3000
+	player.onGround = 0 ' not on ground
 END SUB
 
 SUB setupAstronauts
@@ -593,10 +688,10 @@ END SUB
 
 FUNCTION waitForKey$
 DO
-	K$ = INKEY$
-LOOP UNTIL K$ <> ""
+	k$ = INKEY$
+LOOP UNTIL k$ <> ""
 
-waitForKey$ = K$
+waitForKey$ = k$
 
 END FUNCTION
 
