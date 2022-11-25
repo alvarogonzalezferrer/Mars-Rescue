@@ -89,6 +89,8 @@ MAXASTRONAUTS = 25
 DIM SHARED player AS PLAYERtype
 DIM SHARED astronauts(MAXASTRONAUTS) AS ASTRONAUTtype
 
+DIM SHARED currentWave ' current wave
+
 ' ------------------------------------------
 ' HARDWARE SETUP
 SCREEN 0
@@ -102,17 +104,26 @@ PRINT CPUtempo
 RANDOMIZE TIMER
 SCREEN 7
 
-DO   ' whole game loop
+DO   ' whole game loop #1
 
 ' intro
 CALL IntroScreen
 
+CALL initGame
+currentWave = 0 ' restart game
+
+do ' wave loop #2
+
+currentWave = currentWave + 1
+
 CLS
 COLOR 15
 PRINT "TRAVELING TO MARS SURFACE!"
+print "WAVE ##"; currentWave
+print 
+color 12
 PRINT "PLEASE WAIT..."
-
-CALL initGame
+color 15
 
 ' game level setup
 CALL initLevel
@@ -120,11 +131,17 @@ CALL initLevel
 ' init astronauts
 CALL setupAstronauts
 
-ACTIVEASTRONAUTS = 3 ' DEBUG ADD MORE EACH WAVE!
- 
-' main game loop of a level
+ACTIVEASTRONAUTS = 3 + currentWave ' ADD MORE EACH WAVE!
+if ACTIVEASTRONAUTS > MAXASTRONAUTS then 
+	' DEBUG!
+	cls
+	print "YOU WON THE GAME!"
+	END 
+end if 
+
+' main game loop of a level #3
 wannaExit = 0 ' wait for ESC key
-DO
+DO 
 	'keyboard
 	d$ = UCASE$(INKEY$)
 
@@ -244,10 +261,20 @@ DO
 	IF ABS(TIMER - idle2) < .02 THEN tempoRatio = tempoRatio - 1 ' slow down
 	IF ABS(TIMER - idle2) > .02 THEN tempoRatio = tempoRatio + 1 ' speed up
 
+' loop #3
+LOOP WHILE ACTIVEASTRONAUTS > 0 and wannaExit <> 1
 
-LOOP WHILE wannaExit <> 1
+' debug message of next wave here!
+cls
+PRINT "NEXT WAVE COMING!"
+print "-- PRESS ANY KEY --"
+k$ = waitForKey$
 
-LOOP ' big game loop with menus and all
+'loop #2
+loop while wannaExit <> 1 ' levels loop
+ 
+'loop #1
+LOOP ' big game loop of the game itself
 
 
 '---------- end ------------
@@ -296,7 +323,7 @@ NEXT
 END SUB
 
 SUB drawAstronauts
-	FOR i = 0 TO ACTIVEASTRONAUTS
+	FOR i = 0 TO ACTIVEASTRONAUTS-1
 		LINE (astronauts(i).x + 2, astronauts(i).y)-(astronauts(i).x + 2, astronauts(i).y + 1), 11
 		
 		LINE (astronauts(i).x + 2, astronauts(i).y + 2)-(astronauts(i).x + 2, astronauts(i).y + 3), 3
@@ -492,7 +519,7 @@ END SUB
 SUB moveAstronauts
 	' IA of astronauts
 	
-	FOR i = 0 TO ACTIVEASTRONAUTS
+	FOR i = 0 TO ACTIVEASTRONAUTS-1
 		' constraint to screen
 		IF astronauts(i).x < 5 THEN astronauts(i).x = 5
 		IF astronauts(i).x > 315 THEN astronauts(i).x = 315
@@ -510,7 +537,21 @@ SUB moveAstronauts
 		astronauts(i).y = astronauts(i).y + astronauts(i).dy
 		astronauts(i).x = astronauts(i).x + astronauts(i).dx
 		
-		' debug HERE SHOULD CHECK IF THEY COLLIDED WITH PLAYER, AND REMOVE FROM LIST!
+		' CHECK IF THEY COLLIDED WITH PLAYER, AND REMOVE FROM LIST!
+		IF ABS(player.x - astronauts(i).x) < 5 AND ABS(player.y - astronauts(i).y) < 5 THEN
+		
+			PLAY "MBO4GGB" ' GOOD SOUND
+			player.score = player.score + 1
+			
+			if ACTIVEASTRONAUTS > 0 then 
+				astronauts(i) = astronauts(ACTIVEASTRONAUTS)
+				ACTIVEASTRONAUTS = ACTIVEASTRONAUTS - 1
+				EXIT SUB
+			else 
+				' WAVE ENDED  , is handled elsewhere
+				exit sub
+			end if
+		END IF
 
 		' will try to chase player if near, or wait
 		IF astronauts(i).ia < 1 THEN ' only if im not running already
@@ -532,9 +573,7 @@ SUB moveAstronauts
 		   astronauts(i).ia = astronauts(i).ia - 1
 		END IF
 		
-		
 	NEXT
-	
 END SUB
 
 SUB setupAstronauts
