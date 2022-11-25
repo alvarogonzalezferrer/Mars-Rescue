@@ -127,9 +127,9 @@ FOR s = 0 TO 100
 	y = RND * 200
 	PSET (x, y), starsFG
 NEXT
-
+PRINT "MISSION #"; currentWave
 PRINT "TRAVELING TO MARS SURFACE!"
-PRINT USING "MARS CREW ##"; currentWave
+PRINT USING "MARS CREW ## }"; currentWave + 3
 PRINT
 COLOR 12
 LOCATE 23, 1
@@ -247,15 +247,25 @@ DO
 		' check crash!
 		IF player.dy > player.mdy THEN
 		   'debug add crash message and sound
-		   LOCATE player.y / 8 - 1, player.x / 8 + 1
+		   LOCATE 10, 16
 		   COLOR 12
-		   PRINT "CRASH!!"
+		   PRINT "CRASH!!!"
 		   CIRCLE (player.x + 3, player.y + 4), 10, 12
 		   PAINT (player.x + 3, player.y + 4), 12
-		   PLAY "MFO3GGFCCo2C"
+		   'PLAY "MFO3GGFCCo2C"
+		   PLAY "mf o1 c c c c p32 d# d d c c b c"
 		   player.life = player.life - 1
-		   ' debug check if life less than 0 then game over
+		   
 		   CALL resetPlayer
+
+		   ' check if life less than 0 then game over
+		   IF player.life < 0 THEN
+				wannaExit = 1
+				LOCATE 11, 12
+				COLOR 14
+				PRINT "MISSION FAILED!!"
+				PLAY "mf o1 c c c c p32 d# d d c c b c p32 d# d# d# d# g f f d# d# d d# "
+		   END IF
 		ELSE
 		  player.dy = 0
 		  player.dx = 0
@@ -406,7 +416,7 @@ y = RND * 100 - 50
 x = 160 - x
 y = 100 - y
 LINE (x - 3, y - 3)-(x + 3, y + 3), 15, B
-LINE (100, 12)-(x, y - 3), 15
+LINE (108, 20)-(x, y - 3), 15
 
 END SUB
 
@@ -495,6 +505,7 @@ COLOR 15
 PRINT "* HOW TO PLAY *"
 PRINT
 PRINT "USE ARROW KEYS TO FIRE THRUSTERS"
+PRINT "YOU CAN ALSO USE A,S,D,W"
 COLOR 12
 PRINT "DO NOT COLLIDE AGAINST MARS SURFACE"
 COLOR 10
@@ -503,8 +514,6 @@ PRINT "RESCUE ALL THE ASTRONAUTS!"
 COLOR 14
 
 PRINT
-PRINT
-
 PRINT
 PRINT
 
@@ -593,8 +602,8 @@ SUB moveAstronauts
 			player.score = player.score + 1
 		   
 			'GIVE MORE FUEL and OXIGEN!
-			player.oxygen = player.oxygen + RND * 100 + 50
-			player.fuel = player.fuel + RND * 25 + 5
+			player.oxygen = player.oxygen + RND * 10 + 5
+			player.fuel = player.fuel + RND * 5 + 5
 
 			IF ACTIVEASTRONAUTS > 0 THEN ' remove from list
 				astronauts(i) = astronauts(ACTIVEASTRONAUTS - 1)
@@ -668,8 +677,8 @@ SUB resetPlayer
 	player.y = 0
 	player.dx = 0
 	player.dy = 0
-	player.fuel = 300
-	player.oxygen = 3000
+	player.fuel = 250
+	player.oxygen = 1500
 	player.onGround = 0 ' not on ground
 END SUB
 
