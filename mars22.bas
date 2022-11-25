@@ -4,6 +4,7 @@ DECLARE SUB IntroScreen ()
 DECLARE SUB MeasureCPU ()
 DECLARE SUB initGame ()
 DECLARE SUB initLevel ()
+DECLARE SUB drawPlayer ()
 ' ------------------------------------------
 ' MARS RESCUE
 ' ------------------------------------------
@@ -12,6 +13,14 @@ DECLARE SUB initLevel ()
 ' ------------------------------------------
 ' SOURCE CODE FOR QBASIC - MSDOS
 ' ONLY TESTED IN DOSBOX AND QB45
+' ------------------------------------------
+' Some tech info:
+' I use mode 7, that has 16 EGA colors and 
+' many video pages.
+' I use page 2 for background 
+' I use page 1 for drawing
+' I use page 0 to show
+' This avoids flicker
 ' ------------------------------------------
 
 ' CPU temporizer
@@ -48,7 +57,8 @@ TYPE PLAYERtype
 END TYPE
 
 ' game stuff
-DIM SHARED PLAYER AS PLAYERtype
+DIM SHARED player AS PLAYERtype
+
 
 ' ------------------------------------------
 ' HARDWARE SETUP
@@ -70,6 +80,10 @@ CALL initGame
 
 ' game level setup
 CALL initLevel
+
+CALL drawPlayer
+
+'---------- end ------------
 
 SUB createMars
 ' creates mars background
@@ -101,28 +115,39 @@ PAINT (0, 199), marsFG
 
 END SUB
 
+SUB drawPlayer
+	LINE (player.x + 1, player.y + 1)-(player.x + 5, player.y + 5), 10, BF
+	CIRCLE (player.x + 3, player.y + 3), 3, 2
+	LINE (player.x, player.y + 6)-(player.x, player.y + 7), 2
+	LINE (player.x + 6, player.y + 6)-(player.x + 6, player.y + 7), 2
+	LINE (player.x + 3, player.y + 6)-(player.x + 3, player.y + 7), 2
+
+	'bounding box
+	'LINE (player.x, player.y)-(player.x + 6, player.y + 7), 15, B
+END SUB
+
 SUB initGame
 	' each new game call this
 	
 	'player init
-	PLAYER.x = 160
-	PLAYER.y = 0
-	PLAYER.dx = 0
-	PLAYER.dy = 0
-	PLAYER.fuel = 3000
-	PLAYER.score = 0
-	PLAYER.life = 3
+	player.x = 160
+	player.y = 0
+	player.dx = 0
+	player.dy = 0
+	player.fuel = 3000
+	player.score = 0
+	player.life = 3
 END SUB
 
 SUB initLevel
 	' each new level call this
 	
 	' player reset for level
-	PLAYER.x = 160
-	PLAYER.y = 0
-	PLAYER.dx = 0
-	PLAYER.dy = 0
-	PLAYER.fuel = 3000
+	player.x = 160
+	player.y = 0
+	player.dx = 0
+	player.dy = 0
+	player.fuel = 3000
 	
 	
 	' draw mars off screen
