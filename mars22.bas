@@ -1,5 +1,6 @@
 DECLARE SUB setupAstronauts ()
 DECLARE SUB drawAstronauts ()
+DECLARE SUB moveAstronauts ()
 DECLARE SUB createMars ()
 DECLARE FUNCTION waitForKey$ ()
 DECLARE SUB IntroScreen ()
@@ -78,7 +79,7 @@ TYPE ASTRONAUTtype
 	dx AS SINGLE
 	dy AS SINGLE
 	frame AS INTEGER
-	ia AS INTEGER
+	ia AS INTEGER ' not used yet
 END TYPE
 
 ' characters and stuff
@@ -136,7 +137,10 @@ DO
 	IF d$ = CHR$(0) + "M" OR d$ = "D" THEN player.dx = player.dx + player.spdx
 		
 	' up
-	IF d$ = CHR$(0) + "H" OR d$ = "W" THEN player.dy = player.dy - player.spdy
+	IF d$ = CHR$(0) + "H" OR d$ = "W" THEN
+		player.dy = player.dy - player.spdy
+		player.fuel = player.fuel - 1
+	END IF
 	
 	' down
 	IF d$ = CHR$(0) + "P" OR d$ = "S" THEN player.dy = player.dy + player.spdy
@@ -187,15 +191,22 @@ DO
 	  player.dy = 0
 	  player.dx = 0
 
+
+	  IF player.onGround = 0 THEN SOUND 100, 1 ' sound only on first touch down
+
 	  ' debug check crash!
 	  player.onGround = 1 'prevent X movement
+
+	  
 	ELSE
 		player.onGround = 0
 	END IF
 
+	' astronauts AI
+	CALL moveAstronauts
 
 	' drawing game frame
-	' draw off screen 
+	' draw off screen
 	SCREEN , , 1, 0
 	PCOPY 2, 1' copy background
 
@@ -317,7 +328,7 @@ SUB drawAstronauts
 			LINE (astronauts(i).x + 3, astronauts(i).y + 4)-(astronauts(i).x + 3, astronauts(i).y + 5), 3
 		END IF
 
-		astronauts(i).frame = astronauts(i).frame + 1
+		astronauts(i).frame = astronauts(i).frame + RND * 3
 		IF astronauts(i).frame > 20 THEN astronauts(i).frame = 0
 	NEXT
 
@@ -376,7 +387,7 @@ SUB initLevel
 	player.dy = 0
 	player.fuel = 3000
 	
-	player.onGround = 0 ' not on ground 
+	player.onGround = 0 ' not on ground
    
 	' draw mars off screen
 	' active page 2,view page 0
@@ -476,11 +487,59 @@ SUB MeasureCPU
 
 END SUB
 
+SUB moveAstronauts
+	' IA of astronauts
+	
+	FOR i = 0 TO ACTIVEASTRONAUTS
+		' constraint to screen
+		IF astronauts(i).x < 5 THEN astronauts(i).x = 5
+		IF astronauts(i).x > 315 THEN astronauts(i).x = 315
+		IF astronauts(i).y < 0 THEN astronauts(i).y = 0
+		IF astronauts(i).y > 194 THEN astronauts(i).y = 194
+		
+		' first fall to ground
+		IF astronauts(i).y + 6 < mapH(astronauts(i).x + 2) THEN
+			astronauts(i).dy = 1.5
+		ELSE
+			astronauts(i).dy = 0 ' on ground
+			astronauts(i).y = mapH(astronauts(i).x + 2) - 6
+		END IF
+		
+		astronauts(i).y = astronauts(i).y + astronauts(i).dy
+		astronauts(i).x = astronauts(i).x + astronauts(i).dx
+		
+		' debug HERE SHOULD CHECK IF THEY COLLIDED WITH PLAYER, AND REMOVE FROM LIST!
+
+		' will try to chase player if near, or wait
+		IF astronauts(i).ia < 1 THEN ' only if im not running already
+			IF ABS(player.x - astronauts(i).x) < 50 AND ABS(player.y - astronauts(i).y) < 30 THEN
+				IF player.x < astronauts(i).x THEN
+					astronauts(i).dx = -.3
+				ELSE
+					astronauts(i).dx = .3
+				END IF
+			ELSE
+				astronauts(i).dx = 0 ' wait
+
+				IF RND * 100 < 5 THEN ' tired of waiting, move
+					astronauts(i).dx = ((RND * 300) - 150) / 100
+					astronauts(i).ia = RND * 45 + 5
+				END IF
+			END IF
+		ELSE
+		   astronauts(i).ia = astronauts(i).ia - 1
+		END IF
+		
+		
+	NEXT
+	
+END SUB
+
 SUB setupAstronauts
 	' puts astronauts on map
 	FOR i = 0 TO MAXASTRONAUTS
 		astronauts(i).x = RND * 310 + 5
-		astronauts(i).y = mapH(astronauts(i).x + 2) - 5
+		astronauts(i).y = mapH(astronauts(i).x + 2) - 6
 		astronauts(i).dx = 0
 		astronauts(i).dy = 0
 		astronauts(i).frame = RND * 20
