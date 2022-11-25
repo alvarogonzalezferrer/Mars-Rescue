@@ -445,6 +445,8 @@ PRINT
 PRINT
 PRINT
 
+PLAY "mbo2ccdeffa"
+
 PRINT "-- PRESS ANY KEY  --"
 COLOR 4
 PRINT "-- OR ESC TO EXIT --"
