@@ -321,14 +321,18 @@ DO ' whole game loop #1
             IF tempoRatio > 5000 THEN tempoRatio = 5000
             looptempo = CPUtempo / tempoRatio
 
+            DIM idle AS SINGLE ' to add useless delays to the for
             FOR fastCPU = 1 TO tempoMultiplier
                 FOR loopfor = 0 TO looptempo
                     'do something to slow down cpu , useless stuff,
                     idle = idle + 1
-                    idle = 0
+                    idle = idle / 4.4
                     idle = loopfor
                 NEXT
             NEXT
+            ' for QB64
+            WHILE (TIMER - idle2 > .02)
+            WEND
 
             IF ABS(TIMER - idle2) < .02 THEN tempoRatio = tempoRatio - 1 ' slow down
             IF ABS(TIMER - idle2) > .02 THEN tempoRatio = tempoRatio + 1 ' speed up
