@@ -47,8 +47,14 @@ TYPE PLAYERtype
 	x AS SINGLE
 	y AS SINGLE
 	
+	' direction x,y
 	dx AS SINGLE
 	dy AS SINGLE
+	
+	spdx AS SINGLE ' speed x
+	spdy AS SINGLE ' speed y
+	
+	grav as SINGLE ' gravity
 	
 	fuel AS SINGLE
 
@@ -81,7 +87,19 @@ CALL initGame
 ' game level setup
 CALL initLevel
 
+' main game loop of a level
+DO
+	'keyboard 
+	D$ = UCASE$(INKEY$)
+
+	IF D$ = CHR$(0) + "K" THEN
+		
+	ENDIF 
+
 CALL drawPlayer
+
+LOOP
+
 
 '---------- end ------------
 
@@ -122,7 +140,7 @@ SUB drawPlayer
 	LINE (player.x + 6, player.y + 6)-(player.x + 6, player.y + 7), 2
 	LINE (player.x + 3, player.y + 6)-(player.x + 3, player.y + 7), 2
 
-	'bounding box
+	'bounding box is x + 6, y  + 7
 	'LINE (player.x, player.y)-(player.x + 6, player.y + 7), 15, B
 END SUB
 
@@ -134,6 +152,12 @@ SUB initGame
 	player.y = 0
 	player.dx = 0
 	player.dy = 0
+	
+	player.spdx = 0.5
+	player.spdy = 0.5
+	
+	player.grav = 0.2
+	
 	player.fuel = 3000
 	player.score = 0
 	player.life = 3
@@ -151,8 +175,11 @@ SUB initLevel
 	
 	
 	' draw mars off screen
-	SCREEN , , 0, 1
-	CALL createMars
+	' active page 2,view page 0 
+	SCREEN , , 2, 0 ' page 2 has the background in cache
+ 	CALL createMars
+	pcopy 2, 1 ' i keep another copy in 1 to double buffer
+	pcopy 1, 0 ' show to screen 
 	SCREEN , , 0, 0
 END SUB
 
