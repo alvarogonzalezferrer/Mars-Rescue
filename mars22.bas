@@ -1,3 +1,5 @@
+DECLARE SUB setupAstronauts ()
+DECLARE SUB drawAstronauts ()
 DECLARE SUB createMars ()
 DECLARE FUNCTION waitForKey$ ()
 DECLARE SUB IntroScreen ()
@@ -70,9 +72,21 @@ TYPE PLAYERtype
 	onGround AS INTEGER ' player on ground?
 END TYPE
 
-' game stuff
-DIM SHARED player AS PLAYERtype
+TYPE ASTRONAUTtype
+	x AS SINGLE
+	y AS SINGLE
+	dx AS SINGLE
+	dy AS SINGLE
+	frame AS INTEGER
+	ia AS INTEGER
+END TYPE
 
+' characters and stuff
+DIM SHARED MAXASTRONAUTS AS INTEGER ' max astronauts on level
+DIM SHARED ACTIVEASTRONAUTS AS INTEGER ' active astronauts on this level, when 0, go to next level!
+MAXASTRONAUTS = 25
+DIM SHARED player AS PLAYERtype
+DIM SHARED astronauts(MAXASTRONAUTS) AS ASTRONAUTtype
 
 ' ------------------------------------------
 ' HARDWARE SETUP
@@ -102,6 +116,11 @@ CALL initGame
 ' game level setup
 CALL initLevel
 
+' init astronauts
+CALL setupAstronauts
+
+ACTIVEASTRONAUTS = 3 ' DEBUG ADD MORE EACH WAVE!
+ 
 ' main game loop of a level
 wannaExit = 0 ' wait for ESC key
 DO
@@ -176,9 +195,12 @@ DO
 
 
 	' drawing game frame
-	' draw off screen  
+	' draw off screen 
 	SCREEN , , 1, 0
 	PCOPY 2, 1' copy background
+
+	' do astronauts
+	CALL drawAstronauts
 
 	' do player
 	CALL drawPlayer
@@ -262,6 +284,45 @@ NEXT
 
 END SUB
 
+SUB drawAstronauts
+	FOR i = 0 TO ACTIVEASTRONAUTS
+		LINE (astronauts(i).x + 2, astronauts(i).y)-(astronauts(i).x + 2, astronauts(i).y + 1), 11
+		
+		LINE (astronauts(i).x + 2, astronauts(i).y + 2)-(astronauts(i).x + 2, astronauts(i).y + 3), 3
+		
+		' animate
+		IF astronauts(i).frame < 10 THEN
+			
+			
+			' arms
+			LINE (astronauts(i).x, astronauts(i).y)-(astronauts(i).x + 1, astronauts(i).y + 1), 3
+			
+			LINE (astronauts(i).x + 3, astronauts(i).y + 1)-(astronauts(i).x + 4, astronauts(i).y), 3
+			
+			'legs
+			LINE (astronauts(i).x, astronauts(i).y + 5)-(astronauts(i).x + 1, astronauts(i).y + 4), 3
+			
+			LINE (astronauts(i).x + 3, astronauts(i).y + 4)-(astronauts(i).x + 4, astronauts(i).y + 5), 3
+			
+		ELSE
+			
+			' arms
+			LINE (astronauts(i).x, astronauts(i).y + 2)-(astronauts(i).x + 1, astronauts(i).y + 1), 3
+			
+			LINE (astronauts(i).x + 3, astronauts(i).y + 1)-(astronauts(i).x + 4, astronauts(i).y + 2), 3
+			
+			'legs
+			LINE (astronauts(i).x + 1, astronauts(i).y + 5)-(astronauts(i).x + 1, astronauts(i).y + 4), 3
+			
+			LINE (astronauts(i).x + 3, astronauts(i).y + 4)-(astronauts(i).x + 3, astronauts(i).y + 5), 3
+		END IF
+
+		astronauts(i).frame = astronauts(i).frame + 1
+		IF astronauts(i).frame > 20 THEN astronauts(i).frame = 0
+	NEXT
+
+END SUB
+
 SUB drawPlayer
 	LINE (player.x + 1, player.y + 1)-(player.x + 5, player.y + 5), 10, BF
 	CIRCLE (player.x + 3, player.y + 3), 3, 2
@@ -315,7 +376,7 @@ SUB initLevel
 	player.dy = 0
 	player.fuel = 3000
 	
-	player.onGround = 0 ' not on ground  
+	player.onGround = 0 ' not on ground 
    
 	' draw mars off screen
 	' active page 2,view page 0
@@ -413,6 +474,19 @@ SUB MeasureCPU
 		IF CPUtempo > 2000000000 THEN CPUtempo = 2000000000 'avoid overflow on fast CPUs
 	LOOP UNTIL ABS(TIMER - T) > 1
 
+END SUB
+
+SUB setupAstronauts
+	' puts astronauts on map
+	FOR i = 0 TO MAXASTRONAUTS
+		astronauts(i).x = RND * 310 + 5
+		astronauts(i).y = mapH(astronauts(i).x + 2) - 5
+		astronauts(i).dx = 0
+		astronauts(i).dy = 0
+		astronauts(i).frame = RND * 20
+		astronauts(i).ia = 0
+	NEXT
+	ACTIVEASTRONAUTS = MAXASTRONAUTS
 END SUB
 
 FUNCTION waitForKey$
