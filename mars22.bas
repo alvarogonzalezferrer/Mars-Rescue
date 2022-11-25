@@ -54,6 +54,9 @@ TYPE PLAYERtype
 	spdx AS SINGLE ' speed x
 	spdy AS SINGLE ' speed y
 	
+	mdx as single ' max speed x
+	mdy as single ' max speed y
+	
 	grav as SINGLE ' gravity
 	
 	fuel AS SINGLE
@@ -92,11 +95,66 @@ DO
 	'keyboard 
 	D$ = UCASE$(INKEY$)
 
-	IF D$ = CHR$(0) + "K" THEN
+	' left
+	IF D$ = CHR$(0) + "K" OR D$ = "A" THEN player.dx = player.dx - player.spdx 
+	
+	' right
+	IF D$ = CHR$(0) + "M" OR D$ = "D" THEN player.dx = player.dx + player.spdx
 		
-	ENDIF 
+	' up
+	IF D$ = CHR$(0) + "H" OR D$ = "A" THEN player.dy = player.dy - player.spdy
+	
+	' down
+	IF D$ = CHR$(0) + "P" OR D$ = "D" THEN player.dy = player.dy + player.spdy
+		
+	
 
-CALL drawPlayer
+	' move
+	player.x = player.x + player.dx 
+	player.y = player.y + player.dy 
+
+	' gravity
+	player.dy = player.dy + player.grav
+
+	' constrain
+	if player.dx < -player.mdx then player.dx = -player.mdx
+	if player.dx > player.mdx then player.dx = player.mdx
+	if player.dy < -player.mdy then player.dy = -player.mdy
+	if player.dy > player.mdy then player.dy = player.mdy
+
+	if player.x < 0 then player.x = 0
+	if player.x > 314 then player.x = 314
+
+	if player.y < 0 then player.y = 0
+	if player.y > 193 then player.y = 193
+
+	' draw off screen	
+	SCREEN , , 1 , 0
+	PCOPY 2,1 ' copy background
+	CALL drawPlayer
+
+	' flip page
+	PCOPY 1, 0
+	SCREEN , , 0,0
+	
+	' --- high resolution timer simulation
+	' measure time and pause to slow down game frames
+	'Pausar
+	idle2 = TIMER
+	IF tempoRatio = 0 THEN tempoRatio = 1 'self adjust
+	IF tempoRatio > 5000 THEN tempoRatio = 5000
+	looptempo = CPUtempo / tempoRatio
+	FOR loopfor = 0 TO looptempo
+		'Hacer algo aqui, sino funciona muy rapido
+		idle = idle + 1
+		idle = 0
+		idle = loopfor
+	NEXT
+	  
+	 
+	IF ABS(TIMER - idle2) < .02 THEN tempoRatio = tempoRatio - 1 ' slow down
+	IF ABS(TIMER - idle2) > .02 THEN tempoRatio = tempoRatio + 1 ' speed up
+
 
 LOOP
 
@@ -157,6 +215,9 @@ SUB initGame
 	player.spdy = 0.5
 	
 	player.grav = 0.2
+	
+	player.mdx = 3
+	player.mdy = 5
 	
 	player.fuel = 3000
 	player.score = 0
