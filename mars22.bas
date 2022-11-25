@@ -112,18 +112,18 @@ CALL IntroScreen
 CALL initGame
 currentWave = 0 ' restart game
 
-do ' wave loop #2
+DO ' wave loop #2
 
 currentWave = currentWave + 1
 
 CLS
 COLOR 15
 PRINT "TRAVELING TO MARS SURFACE!"
-print "WAVE ##"; currentWave
-print 
-color 12
+PRINT USING "WAVE ##"; currentWave
+PRINT
+COLOR 12
 PRINT "PLEASE WAIT..."
-color 15
+COLOR 15
 
 ' game level setup
 CALL initLevel
@@ -132,16 +132,16 @@ CALL initLevel
 CALL setupAstronauts
 
 ACTIVEASTRONAUTS = 3 + currentWave ' ADD MORE EACH WAVE!
-if ACTIVEASTRONAUTS > MAXASTRONAUTS then 
+IF ACTIVEASTRONAUTS > MAXASTRONAUTS THEN
 	' DEBUG!
-	cls
-	print "YOU WON THE GAME!"
-	END 
-end if 
+	CLS
+	PRINT "YOU WON THE GAME!"
+	END
+END IF
 
 ' main game loop of a level #3
 wannaExit = 0 ' wait for ESC key
-DO 
+DO
 	'keyboard
 	d$ = UCASE$(INKEY$)
 
@@ -208,13 +208,11 @@ DO
 	  player.dy = 0
 	  player.dx = 0
 
-
 	  IF player.onGround = 0 THEN SOUND 100, 1 ' sound only on first touch down
 
 	  ' debug check crash!
 	  player.onGround = 1 'prevent X movement
 
-	  
 	ELSE
 		player.onGround = 0
 	END IF
@@ -235,10 +233,13 @@ DO
 	
 	' HUD
 	LOCATE 1, 1
-	PRINT USING "> Fuel #### --- Life## --- Score#####"; player.fuel; player.life; player.score
+	PRINT USING "> Fuel ### --- Life## --- Score#####"; player.fuel; player.life; player.score
 	LOCATE 2, 1
-	PRINT USING "> dx##.# dy##.#"; player.dx; player.dy
-	IF player.onGround THEN PRINT "* LANDED *"
+	IF player.onGround THEN
+		PRINT "> * LANDED *"
+	ELSE
+		PRINT USING "> dx##.# dy##.#"; player.dx; player.dy
+	END IF
 
 	' flip page
 	PCOPY 1, 0
@@ -262,16 +263,16 @@ DO
 	IF ABS(TIMER - idle2) > .02 THEN tempoRatio = tempoRatio + 1 ' speed up
 
 ' loop #3
-LOOP WHILE ACTIVEASTRONAUTS > 0 and wannaExit <> 1
+LOOP WHILE ACTIVEASTRONAUTS > 0 AND wannaExit <> 1
 
 ' debug message of next wave here!
-cls
-PRINT "NEXT WAVE COMING!"
-print "-- PRESS ANY KEY --"
-k$ = waitForKey$
+'cls
+'PRINT "NEXT WAVE COMING!"
+'print "-- PRESS ANY KEY --"
+'k$ = waitForKey$
 
 'loop #2
-loop while wannaExit <> 1 ' levels loop
+LOOP WHILE wannaExit <> 1 ' levels loop
  
 'loop #1
 LOOP ' big game loop of the game itself
@@ -323,7 +324,7 @@ NEXT
 END SUB
 
 SUB drawAstronauts
-	FOR i = 0 TO ACTIVEASTRONAUTS-1
+	FOR i = 0 TO ACTIVEASTRONAUTS - 1
 		LINE (astronauts(i).x + 2, astronauts(i).y)-(astronauts(i).x + 2, astronauts(i).y + 1), 11
 		
 		LINE (astronauts(i).x + 2, astronauts(i).y + 2)-(astronauts(i).x + 2, astronauts(i).y + 3), 3
@@ -412,7 +413,7 @@ SUB initLevel
 	player.y = 0
 	player.dx = 0
 	player.dy = 0
-	player.fuel = 3000
+	player.fuel = 300
 	
 	player.onGround = 0 ' not on ground
    
@@ -472,7 +473,7 @@ PRINT
 PRINT
 PRINT
 
-PLAY "mbo2ccdeffa"
+PLAY "mbl8o2ccdeffa"
 
 PRINT "-- PRESS ANY KEY  --"
 COLOR 4
@@ -519,7 +520,7 @@ END SUB
 SUB moveAstronauts
 	' IA of astronauts
 	
-	FOR i = 0 TO ACTIVEASTRONAUTS-1
+	FOR i = 0 TO ACTIVEASTRONAUTS - 1
 		' constraint to screen
 		IF astronauts(i).x < 5 THEN astronauts(i).x = 5
 		IF astronauts(i).x > 315 THEN astronauts(i).x = 315
@@ -544,14 +545,14 @@ SUB moveAstronauts
 			
 			player.score = player.score + 1
 			
-			if ACTIVEASTRONAUTS > 0 then 
-				astronauts(i) = astronauts(ACTIVEASTRONAUTS-1)
+			IF ACTIVEASTRONAUTS > 0 THEN
+				astronauts(i) = astronauts(ACTIVEASTRONAUTS - 1)
 				ACTIVEASTRONAUTS = ACTIVEASTRONAUTS - 1
 				EXIT SUB
-			else 
+			ELSE
 				' WAVE ENDED  , is handled elsewhere
-				exit sub
-			end if
+				EXIT SUB
+			END IF
 		END IF
 
 		' will try to chase player if near, or wait
