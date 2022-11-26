@@ -569,7 +569,9 @@ SUB exitGame
 
 	print 
 	color 10
-	print "I think humans will reach Mars, and I would like to see it happen in my lifetime. - Buzz Aldrin"
+	print "Humans will reach Mars, and I would like to see it happen in my lifetime."
+	color 2 
+	print "- Buzz Aldrin"
 
 	END
 END SUB
