@@ -11,6 +11,7 @@ DECLARE SUB MeasureCPU ()
 DECLARE SUB initGame ()
 DECLARE SUB initLevel ()
 DECLARE SUB drawPlayer ()
+declare sub exitGame()
 ' ------------------------------------------
 ' MARS RESCUE
 ' ------------------------------------------
@@ -491,10 +492,8 @@ SUB initLevel
 END SUB
 
 SUB IntroScreen
-    COLOR 14
-
     CLS
-
+	COLOR 14
     PRINT "MARS RESCUE"
     PRINT "==== ======"
     PRINT
@@ -546,26 +545,29 @@ SUB IntroScreen
     k$ = waitForKey$
 
     IF k$ = CHR$(27) THEN
-        SCREEN 0
-        WIDTH 80, 25
-        COLOR 12
-        PRINT "THANKS FOR PLAYING!"
-           
-        COLOR 15
-        PRINT "By ";
-        COLOR 11
-        PRINT "KRO";
-        COLOR 15
-        PRINT "NO";
-        COLOR 11
-        PRINT "MAN";
-        COLOR 15
-        PRINT " - (c) 2022"
-
-        END
+			call exitGame
     END IF
+END SUB
 
+SUB exitGame
+	' exit game to MS DOS
+	SCREEN 0
+	WIDTH 80, 25
+	COLOR 12
+	PRINT "THANKS FOR PLAYING!"
+	   
+	COLOR 15
+	PRINT "By ";
+	COLOR 11
+	PRINT "KRO";
+	COLOR 15
+	PRINT "NO";
+	COLOR 11
+	PRINT "MAN";
+	COLOR 15
+	PRINT " - (c) 2022"
 
+	END
 END SUB
 
 SUB moveAstronauts
@@ -687,8 +689,6 @@ SUB resetPlayer
     player.oxygen = 1500
     player.onGround = 0 ' not on ground
 
-
-
     ' GET READY MESSAGE
     ' SHOWN WHEN STARTING LEVEL OR LOSING A LIFE
     LOCATE 10, 15
@@ -715,13 +715,40 @@ END SUB
 SUB showScore
     ' shows final score, but only when the mission is a failure
     ' not for winning the game
+	CLS
+	COLOR 14
+    PRINT "And so, mission ends..."
+	color 15
+	print 
+	print "Score: " ; player.score
+	print "Wave : "; currentWave
+	print 
+    PRINT "The first human beings to land on Mars should not come back to Earth. They should be the beginning of a build-up of a settlement, I call it a permanence. - Buzz Aldrin"
+    PRINT
 
+
+    PRINT
+    PRINT
+    PRINT
+
+    PLAY "mbl8o2dedeggo3cc"
+
+    PRINT "-- PRESS ANY KEY TO RESTART --"
+    COLOR 4
+    PRINT "-- OR ESC TO EXIT           --"
+    COLOR 15
+
+    k$ = waitForKey$
+
+    IF k$ = CHR$(27) THEN
+			call exitGame
+    END IF
 
 END SUB
 
 SUB showYouWon
     ' show when you won the game
-
+	
 END SUB
 
 FUNCTION waitForKey$
