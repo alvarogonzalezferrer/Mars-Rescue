@@ -1,3 +1,5 @@
+DECLARE SUB showScore ()
+DECLARE SUB showYouWon ()
 DECLARE SUB resetPlayer ()
 DECLARE SUB drawIntroLevel ()
 DECLARE SUB setupAstronauts ()
@@ -78,7 +80,9 @@ END TYPE
 ' characters and stuff
 DIM SHARED MAXASTRONAUTS AS INTEGER ' max astronauts on level
 DIM SHARED ACTIVEASTRONAUTS AS INTEGER ' active astronauts on this level, when 0, go to next level!
-MAXASTRONAUTS = 25
+
+MAXASTRONAUTS = 25 'this is very important, will determine max rescue astronauts and also game lenght
+
 DIM SHARED player AS PLAYERtype
 DIM SHARED astronauts(MAXASTRONAUTS) AS ASTRONAUTtype
 
@@ -136,10 +140,8 @@ DO ' whole game loop #1
 
         ACTIVEASTRONAUTS = 3 + currentWave ' ADD MORE EACH WAVE!
         IF ACTIVEASTRONAUTS > MAXASTRONAUTS THEN
-            ' DEBUG - add proper win screen!
-            CLS
-            PRINT "YOU WON THE GAME!"
-            END
+            ACTIVEASTRONAUTS = MAXASTRONAUTS
+            'after this wave, you won the game (see below)
         END IF
 
         ' main game loop of a level #3
@@ -151,13 +153,13 @@ DO ' whole game loop #1
             IF d$ = CHR$(27) THEN wannaExit = 1
 
             ' left
-            IF d$ = CHR$(0) + "K" OR d$ = "A" THEN
+            IF (d$ = CHR$(0) + "K" OR d$ = "A") AND player.onGround = 0 THEN
                 player.dx = player.dx - player.spdx
                 player.fuel = player.fuel - 1
             END IF
 
             ' right
-            IF d$ = CHR$(0) + "M" OR d$ = "D" THEN
+            IF (d$ = CHR$(0) + "M" OR d$ = "D") AND player.onGround = 0 THEN
                 player.dx = player.dx + player.spdx
                 player.fuel = player.fuel - 1
             END IF
@@ -191,13 +193,15 @@ DO ' whole game loop #1
                 player.dx = 0
             END IF
 
+            ' this limit is quite important to not get out of bounds in map height
             IF player.x > 312 THEN
                 player.x = 312
                 player.dx = 0
             END IF
-
-            IF player.y < 0 THEN
-                player.y = 0
+           
+            'dont invade the HUD
+            IF player.y < 16 THEN
+                player.y = 16
                 player.dy = 0
             END IF
 
@@ -343,12 +347,13 @@ DO ' whole game loop #1
             ' loop #3
         LOOP WHILE ACTIVEASTRONAUTS > 0 AND wannaExit <> 1
 
-        ' debug message of next wave here!
-        'cls
-        'PRINT "NEXT WAVE COMING!"
-        'print "-- PRESS ANY KEY --"
-        'k$ = waitForKey$
-
+        IF ACTIVEASTRONAUTS >= MAXASTRONAUTS THEN
+            ' won the game!
+            CALL showYouWon
+            wannaExit = 1 'restart game anyways
+        ELSE
+            IF wannaExit = 1 THEN CALL showScore ' end game show score
+        END IF
         'loop #2
     LOOP WHILE wannaExit <> 1 ' levels loop
  
@@ -399,7 +404,7 @@ SUB createMars
             END IF
         NEXT
     NEXT
-    'bugfix
+    'bugfix for when the player is too near right border
     mapH(320) = 200
     mapH(321) = 200
     mapH(322) = 200
@@ -421,6 +426,7 @@ SUB drawIntroLevel
         y = 100 - y
         PSET (x, y), 6
         IF RND * 50 > 40 THEN CIRCLE (x, y), 1, 6
+        IF RND * 50 > 48 THEN CIRCLE (x, y), 2, 6
     NEXT
     ' mars crew location on planet
     x = RND * 100 - 50
@@ -704,6 +710,18 @@ SUB setupAstronauts
         astronauts(i).ia = 0
     NEXT
     ACTIVEASTRONAUTS = MAXASTRONAUTS
+END SUB
+
+SUB showScore
+    ' shows final score, but only when the mission is a failure
+    ' not for winning the game
+
+
+END SUB
+
+SUB showYouWon
+    ' show when you won the game
+
 END SUB
 
 FUNCTION waitForKey$
