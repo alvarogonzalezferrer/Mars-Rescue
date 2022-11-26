@@ -4,6 +4,10 @@ Game created for the *Lost Cartridge Jam*: an annual game jam where game designe
 
 https://itch.io/jam/lostcartridgejam4
 
+## Play online
+
+https://alvarogonzalezferrer.github.io/Mars-Rescue/
+
 ## Check my portfolio and hire me!
 
 Recruiters, I'm available for remote work! Check me: https://github.com/alvarogonzalezferrer
