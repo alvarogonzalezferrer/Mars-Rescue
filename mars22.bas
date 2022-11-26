@@ -241,15 +241,6 @@ DO ' whole game loop #1
                         player.life = player.life - 1
 
                         CALL resetPlayer
-
-                        ' check if life less than 0 then game over
-                        IF player.life < 0 THEN
-                            wannaExit = 1
-                            LOCATE 11, 12
-                            COLOR 14
-                            PRINT "MISSION FAILED!!"
-                            PLAY "mf o1 c c c c p32 d# d d c c b c p32 d# d# d# d# g f f d# d# d d# "
-                        END IF
                     ELSE
                         player.dy = 0
                         player.dx = 0
@@ -275,25 +266,70 @@ DO ' whole game loop #1
             CALL drawPlayer
 
             ' HUD
-            COLOR 15
-            LOCATE 1, 1
-            IF player.fuel < 25 OR player.oxygen < 200 THEN COLOR 12 ' low fuel or oxygen
-            PRINT USING ">Fuel####|Oxygen####|Score####|Life##"; player.fuel; player.oxygen; player.score; player.life
-            LOCATE 2, 1
-            COLOR 15
-            IF player.onGround THEN
-                COLOR 10
-                PRINT ">* LANDED *<"
-            ELSE
+            IF player.life > -1 AND player.fuel > 0 AND player.oxygen > 0 THEN
                 COLOR 15
-                IF player.dy > player.mdy THEN COLOR 12 'going to crash, warn!
-                IF player.dy > 0 AND player.dy <= player.mdy THEN COLOR 10 'good landing speed
-                PRINT USING ">dx##.# dy##.#<"; player.dx; player.dy
+                LOCATE 1, 1
+                IF player.fuel < 25 OR player.oxygen < 200 THEN COLOR 12 ' low fuel or oxygen
+                PRINT USING ">Fuel####|Oxygen####|Score####|Life##"; player.fuel; player.oxygen; player.score; player.life
+                LOCATE 2, 1
+                COLOR 15
+                IF player.onGround THEN
+                    COLOR 10
+                    PRINT ">* LANDED *<"
+                ELSE
+                    COLOR 15
+                    IF player.dy > player.mdy THEN COLOR 12 'going to crash, warn!
+                    IF player.dy > 0 AND player.dy <= player.mdy THEN COLOR 10 'good landing speed
+                    PRINT USING ">dx##.# dy##.#<"; player.dx; player.dy
+                END IF
+            ELSE
+                COLOR 12
+                LOCATE 1, 1
+                PRINT "** MISSION FAILURE **"
+                IF player.life < 0 THEN PRINT "> NO SHIPS LEFT"
+                IF player.oxygen < 1 THEN PRINT "> NO OXYGEN LEFT"
+                IF player.fuel < 1 THEN PRINT "> NO FUEL LEFT"
             END IF
 
             ' flip page
             PCOPY 1, 0
             SCREEN , , 0, 0
+           
+            ' -- out of fuel?
+            IF player.fuel < 1 THEN
+                player.fuel = 0
+                LOCATE 10, 14
+                COLOR 12
+                PRINT "OUT OF FUEL!"
+                PLAY "mfo2CCp32def"
+                player.life = player.life - 1
+
+                CALL resetPlayer
+            END IF
+
+            ' -- out of oxygen
+            IF player.oxygen < 1 THEN
+                player.oxygen = 0
+                LOCATE 10, 13
+                COLOR 12
+                PRINT "OUT OF OXYGEN!"
+                PLAY "mfo2DBDBCCC"
+                player.life = player.life - 1
+
+                CALL resetPlayer
+            END IF
+
+            ' -- game over --
+            ' check if life less than 0 then game over
+            IF player.life < 0 THEN
+                wannaExit = 1 ' go back to main menu
+                LOCATE 11, 12
+                COLOR 14
+                PRINT "MISSION FAILED!!"
+                PLAY "mf o1 c c c c p32 d# d d c c b c p32 d# d# d# d# g f f d# d# d d# "
+            END IF
+
+
 
             ' --- high resolution timer simulation
             ' new timer delay system
@@ -435,8 +471,6 @@ SUB initGame
 END SUB
 
 SUB initLevel
-    ' each new level call this
-    CALL resetPlayer
    
     ' draw mars off screen
     ' active page 2,view page 0
@@ -445,6 +479,9 @@ SUB initLevel
     PCOPY 2, 1 ' i keep another copy in 1 to double buffer
     PCOPY 1, 0 ' show to screen
     SCREEN , , 0, 0
+
+    ' each new level call this
+    CALL resetPlayer
 END SUB
 
 SUB IntroScreen
@@ -643,6 +680,17 @@ SUB resetPlayer
     player.fuel = 250
     player.oxygen = 1500
     player.onGround = 0 ' not on ground
+
+
+
+    ' GET READY MESSAGE
+    ' SHOWN WHEN STARTING LEVEL OR LOSING A LIFE
+    LOCATE 10, 15
+    COLOR 10
+    PRINT "GET READY!"
+    idle = TIMER
+    WHILE ABS(TIMER - idle) < 1
+    WEND
 END SUB
 
 SUB setupAstronauts
