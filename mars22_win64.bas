@@ -18,8 +18,8 @@ DECLARE SUB exitGame ()
 ' ------------------------------------------
 ' BY KRONOMAN - COPYRIGHT (C) 2022
 ' ------------------------------------------
-' SOURCE CODE FOR QBASIC - MSDOS (QB 4.5)
-' CAN BE COMPILED WITH QB64 FOR WINDOWS TOO
+' SOURCE CODE FOR QB64 FOR WINDOWS 
+' https://qb64.com/
 ' ------------------------------------------
 ' Some tech info:
 ' I use mode 7, that has 16 EGA colors and
