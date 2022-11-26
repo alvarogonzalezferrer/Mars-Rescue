@@ -27,17 +27,7 @@ DECLARE SUB drawPlayer ()
 ' This avoids flicker
 ' ------------------------------------------
 
-' CPU temporizer
-DIM SHARED CPUtempo AS LONG
-'temporizer ratio - automatically adjusted
-DIM tempoRatio AS LONG
-DIM tempoMultiplier AS LONG 'for really fast CPUs, I add a multiplier
-tempoRatio = 500 'default...
-DIM looptempo AS LONG
-DIM loopfor AS LONG
-looptempo = 0
-
-' mars map height map
+' mars map height map in pixels
 DIM SHARED mapH(325) AS INTEGER
 
 'colors of mars map
@@ -47,7 +37,7 @@ DIM SHARED starsFG
 
 LET skyBG = 0 '  sky
 LET marsFG = 4 ' land
-LET starsFG = 15 ' stars
+LET starsFG = 7 ' stars
 
 ' ------------------------------------------
 ' game types
@@ -96,15 +86,6 @@ DIM SHARED currentWave ' current wave
 
 ' ------------------------------------------
 ' HARDWARE SETUP
-SCREEN 0
-CLS
-COLOR 15, 4
-PRINT "Wait please...traveling to mars!"
-CALL MeasureCPU
-COLOR 4, 0
-PRINT CPUtempo; " x "; tempoMultiplier
-SLEEP 1
-
 ' START THE FUN
 RANDOMIZE TIMER
 SCREEN 7
@@ -315,28 +296,13 @@ DO ' whole game loop #1
             SCREEN , , 0, 0
 
             ' --- high resolution timer simulation
-            ' measure time and pause to slow down game frames
-            idle2 = TIMER
-            IF tempoRatio <= 0 THEN tempoRatio = 1 'self adjust
-            IF tempoRatio > 5000 THEN tempoRatio = 5000
-            looptempo = CPUtempo / tempoRatio
-
-            DIM idle AS SINGLE ' to add useless delays to the for
-            FOR fastCPU = 1 TO tempoMultiplier
-                FOR loopfor = 0 TO looptempo
-                    'do something to slow down cpu , useless stuff,
-                    idle = idle + 1
-                    idle = idle / 4.4
-                    idle = loopfor
-                NEXT
-            NEXT
-            ' for QB64
-            WHILE (TIMER - idle2 > .02)
+            ' new timer delay system
+            ' for QB64 or too fast computers works good too
+            ' tested on DOSBOX
+            idle = TIMER
+            WHILE (ABS(TIMER - idle) < .01)
             WEND
-
-            IF ABS(TIMER - idle2) < .02 THEN tempoRatio = tempoRatio - 1 ' slow down
-            IF ABS(TIMER - idle2) > .02 THEN tempoRatio = tempoRatio + 1 ' speed up
-            ' end temporizer
+            ' --- end temporizer
 
             ' loop #3
         LOOP WHILE ACTIVEASTRONAUTS > 0 AND wannaExit <> 1
@@ -559,22 +525,6 @@ SUB IntroScreen
 
 END SUB
 
-SUB MeasureCPU
-
-    'measures CPU performance to try to emulate a high resolution timer
-    T = TIMER
-    CPUtempo = 0
-    tempoMultiplier = 1
-    DO
-        CPUtempo = CPUtempo + 1
-        IF CPUtempo > 2147483640 THEN
-            CPUtempo = 0 'avoid overflow on fast CPUs
-            tempoMultiplier = tempoMultiplier + 1
-        END IF
-    LOOP UNTIL ABS(TIMER - T) > 1
-    IF tempoMultiplier > 1 THEN CPUtempo = 2147483640
-END SUB
-
 SUB moveAstronauts
     'NOTE: i also moved the draw code here to sped up loops
     'only 1 pass over astronaut list, instead of 2
@@ -609,7 +559,7 @@ SUB moveAstronauts
         astronauts(i).x = astronauts(i).x + astronauts(i).dx
         
         ' CHECK IF THEY COLLIDED WITH PLAYER, AND REMOVE FROM LIST!
-        IF ABS(player.x - astronauts(i).x) < 5 AND ABS(player.y - astronauts(i).y) < 5 THEN
+        IF ABS(player.x - astronauts(i).x) < 6 AND ABS(player.y - astronauts(i).y) < 10 THEN
         
             PLAY "MBO2L8CFG" ' pickup sound
             
@@ -632,17 +582,16 @@ SUB moveAstronauts
         ' will try to chase player if near, or wait
         IF astronauts(i).ia < 1 THEN ' only if im not running already
             IF ABS(player.x - astronauts(i).x) < 50 AND ABS(player.y - astronauts(i).y) < 30 THEN
-                IF player.x < astronauts(i).x THEN
-                    astronauts(i).dx = -.3
-                ELSE
-                    astronauts(i).dx = .3
-                END IF
+                astronauts(i).dx = 0 'this prevents flicker if we are just below the player ship
+                IF player.x < astronauts(i).x + 2 THEN astronauts(i).dx = -.3
+                
+                IF player.x + 6 > astronauts(i).x + 2 THEN astronauts(i).dx = .3
             ELSE
                 astronauts(i).dx = 0 ' wait
 
                 IF RND * 100 < 5 THEN ' tired of waiting, move
-                    astronauts(i).dx = ((RND * 300) - 150) / 100
-                    astronauts(i).ia = RND * 45 + 5
+                    astronauts(i).dx = ((RND * 200) - 100) / 100
+                    astronauts(i).ia = RND * 15 + 5
                 END IF
             END IF
         ELSE
