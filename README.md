@@ -18,7 +18,9 @@ Timing for modern CPUs with old QBasic was also a challenge.
 
 All comments are welcome, I hope you have a great week!
 
-## Play online
+## Support me and play online
+
+https://kronoman.itch.io/mars-rescue
 
 https://alvarogonzalezferrer.github.io/Mars-Rescue/
 
