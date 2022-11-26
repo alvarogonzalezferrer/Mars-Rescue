@@ -101,16 +101,18 @@ loopedGame = 0 ' how many times won the game in this run
 ' START THE FUN
 Randomize Timer
 Screen 7
+
 'only for windows - qb64
 _FullScreen
 If _FullScreen = 0 Then _FullScreen _Off 'check that a full screen mode initialized
-
+_Title "Mars Rescue by Krono"
+' end QB64 stuff
 
 Do ' whole game loop #1
 
     ' intro
     Call IntroScreen
-   
+
     Call chooseDifficulty
 
     Call initGame
@@ -756,14 +758,14 @@ Sub moveAstronauts
 
         '-- draw code for astronaut (i)
         Line (astronauts(i).x + 2, astronauts(i).y)-(astronauts(i).x + 2, astronauts(i).y + 3), 11
-       
+
         'LINE (astronauts(i).x + 2, astronauts(i).y + 2)-(astronauts(i).x + 2, astronauts(i).y + 3), 3
        
         ' animate
         If astronauts(i).frame < 10 Then
             ' arms
             Line (astronauts(i).x, astronauts(i).y)-(astronauts(i).x + 1, astronauts(i).y + 1), 3
-           
+
             Line (astronauts(i).x + 3, astronauts(i).y + 1)-(astronauts(i).x + 4, astronauts(i).y), 3
 
             'legs
