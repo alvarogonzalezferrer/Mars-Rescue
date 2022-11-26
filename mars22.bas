@@ -1,3 +1,6 @@
+DECLARE SUB addParticle (x!, y!, dx!, dy!, g!, c!, l!)
+DECLARE SUB animateParticles ()
+DECLARE SUB resetParticles ()
 DECLARE SUB showDifficulty ()
 DECLARE SUB chooseDifficulty ()
 DECLARE SUB showScore ()
@@ -233,7 +236,7 @@ DO ' whole game loop #1
                 player.fuel = player.fuel - 1
 
 
-                CALL addParticle(player.x + 6 + INT(RND * 2), player.y + 7 + INT(RND * 2), 0.1 + (RND * 10) / 10, 0.1 + (RND * 10) / 10, 0, 14, INT(RND * 3) + 2) ' fire animation
+                CALL addParticle(player.x + 6 + INT(RND * 2), player.y + 7 + INT(RND * 2), .1 + (RND * 10) / 10, .1 + (RND * 10) / 10, 0, 14, INT(RND * 3) + 2)   ' fire animation
             END IF
 
             ' right
@@ -241,7 +244,7 @@ DO ' whole game loop #1
                 player.dx = player.dx + player.spdx
                 player.fuel = player.fuel - 1
 
-                CALL addParticle(player.x - INT(RND * 2), player.y + 7 + INT(RND * 2), -0.1 - (RND * 10) / 10, 0.1 + (RND * 10) / 10, 0, 14, INT(RND * 3) + 2) ' fire animation
+                CALL addParticle(player.x - INT(RND * 2), player.y + 7 + INT(RND * 2), -.1 - (RND * 10) / 10, .1 + (RND * 10) / 10, 0, 14, INT(RND * 3) + 2)   ' fire animation
             END IF
 
             ' up
@@ -249,7 +252,7 @@ DO ' whole game loop #1
                 player.dy = player.dy - player.spdy
                 player.fuel = player.fuel - 1
 
-                CALL addParticle(player.x + 2 + INT(RND * 2), player.y + 7 + INT(RND * 2), (RND * 20 - 10) / 10, 0.1 + (RND * 20) / 10, 0, 14, INT(RND * 3) + 2) ' fire animation
+                CALL addParticle(player.x + 2 + INT(RND * 2), player.y + 7 + INT(RND * 2), (RND * 20 - 10) / 10, .1 + (RND * 20) / 10, 0, 14, INT(RND * 3) + 2)  ' fire animation
             END IF
 
             ' down
@@ -343,9 +346,9 @@ DO ' whole game loop #1
                         player.onGround = 1 'prevent X movement
 
                         ' add soil particles
-                        CALL addParticle(player.x + INT(RND * 6), player.y + 7, (RND * 40 - 20) / 10, -0.2 - (RND * 30) / 10, 0.1, 4, INT(RND * 4) + 2)
-                        CALL addParticle(player.x + INT(RND * 6), player.y + 7, (RND * 40 - 20) / 10, -0.2 - (RND * 30) / 10, 0.1, 4, INT(RND * 4) + 2)
-                        CALL addParticle(player.x + INT(RND * 6), player.y + 7, (RND * 40 - 20) / 10, -0.2 - (RND * 30) / 10, 0.1, 4, INT(RND * 4) + 2)
+                        CALL addParticle(player.x + INT(RND * 6), player.y + 7, (RND * 40 - 20) / 10, -.2 - (RND * 30) / 10, .1, 4, INT(RND * 4) + 2)
+                        CALL addParticle(player.x + INT(RND * 6), player.y + 7, (RND * 40 - 20) / 10, -.2 - (RND * 30) / 10, .1, 4, INT(RND * 4) + 2)
+                        CALL addParticle(player.x + INT(RND * 6), player.y + 7, (RND * 40 - 20) / 10, -.2 - (RND * 30) / 10, .1, 4, INT(RND * 4) + 2)
 
                     END IF
                 END IF
@@ -463,6 +466,49 @@ LOOP ' big game loop of the game itself
 
 
 '---------- end ------------
+
+SUB addParticle (x, y, dx, dy, g, c, l)
+    'add particle
+    IF activeParticles >= maxParticles THEN EXIT SUB 'too many active particles, abort
+
+
+    particles(activeParticles).x = x
+    particles(activeParticles).y = y
+    particles(activeParticles).dx = dx
+    particles(activeParticles).dy = dy
+    particles(activeParticles).g = g
+    particles(activeParticles).c = c
+    particles(activeParticles).l = l
+
+
+    activeParticles = activeParticles + 1 ' I add here because I want to use index-1, lets say first particle goes in (0), second in (1), etc
+
+END SUB
+
+SUB animateParticles
+    'animate particles
+    'also draw them, to avoid doing twice the loop
+    FOR i = 0 TO activeParticles - 1
+        particles(i).l = particles(i).l - 1 ' life of particle
+        IF particles(i).l < 1 THEN
+            ' particle died
+            IF activeParticles > 0 THEN ' remove from list and skip loop until next tick
+                particles(i) = particles(activeParticles - 1)
+                activeParticles = activeParticles - 1
+                EXIT SUB
+            END IF
+        ELSE
+            ' animate and draw
+            particles(i).x = particles(i).x + particles(i).dx
+            particles(i).y = particles(i).y + particles(i).dy + particles(i).g ' add dy and gravity
+
+            PSET (particles(i).x, particles(i).y), particles(i).c 'draw
+
+        END IF
+
+    NEXT i
+
+END SUB
 
 SUB chooseDifficulty
     CLS
@@ -686,7 +732,7 @@ SUB IntroScreen
     COLOR 11
     PRINT "MAN";
     COLOR 15
-    PRINT " - (c) 2022"
+    PRINT " - (c) 1982"
 
 
     COLOR 14
@@ -835,6 +881,10 @@ SUB moveAstronauts
         IF astronauts(i).frame > 20 THEN astronauts(i).frame = 0
 
     NEXT
+END SUB
+
+SUB resetParticles
+    activeParticles = 0
 END SUB
 
 SUB resetPlayer
@@ -1009,50 +1059,3 @@ FUNCTION waitForKey$
 
 END FUNCTION
 
-
-SUB resetParticles
-    activeParticles = 0
-END SUB
-
-SUB animateParticles
-    'animate particles
-    'also draw them, to avoid doing twice the loop
-    FOR i = 0 TO activeParticles - 1
-        particles(i).l = particles(i).l - 1 ' life of particle
-        IF particles(i).l < 1 THEN
-            ' particle died
-            IF activeParticles > 0 THEN ' remove from list and skip loop until next tick
-                particles(i) = particles(activeParticles - 1)
-                activeParticles = activeParticles - 1
-                EXIT SUB
-            END IF
-        ELSE
-            ' animate and draw
-            particles(i).x = particles(i).x + particles(i).dx
-            particles(i).y = particles(i).y + particles(i).dy + particles(i).g ' add dy and gravity
-
-            PSET (particles(i).x, particles(i).y), particles(i).c 'draw
-
-        END IF
-
-    NEXT i
-
-END SUB
-
-SUB addParticle (x, y, dx, dy, g, c, l)
-    'add particle
-    IF activeParticles >= maxParticles THEN EXIT SUB 'too many active particles, abort
-
-
-    particles(activeParticles).x = x
-    particles(activeParticles).y = y
-    particles(activeParticles).dx = dx
-    particles(activeParticles).dy = dy
-    particles(activeParticles).g = g
-    particles(activeParticles).c = c
-    particles(activeParticles).l = l
-
-
-    activeParticles = activeParticles + 1 ' I add here because I want to use index-1, lets say first particle goes in (0), second in (1), etc
-
-END SUB

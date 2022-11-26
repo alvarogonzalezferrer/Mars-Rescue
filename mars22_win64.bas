@@ -698,7 +698,7 @@ SUB IntroScreen
     COLOR 11
     PRINT "MAN";
     COLOR 15
-    PRINT " - (c) 2022"
+    PRINT " - (c) 1982"
 
 
     COLOR 14
