@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+        html,
+        body,
+        #jsdos {
+            width: 100%;
+            height: 100%;
+            margin: 5px;
+            padding: 5px;
+        }
+
+        body {
+            background-color: rgb(17, 17, 17);
+        }
+
+        p {
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        a:link {
+            color: lightblue;
+        }
+
+        /* visited link */
+        a:visited {
+            color: lightblue;
+        }
+
+        /* mouse over link */
+        a:hover {
+            color: yellow;
+        }
+
+        /* selected link */
+        a:active {
+            color: yellow;
+        }
+
+        h1 {
+            font-weight: bold;
+            font-size: x-large;
+            color: yellow;
+        }
+
+        h2 {
+            font-weight: bold;
+            font-size: large;
+            color: yellow;
+        }
+    </style>
+    <script src="js-dos.js"></script>
+    <link href="js-dos.css" rel="stylesheet">
+    <title>Mars Rescue - Retro Game</title>
+</head>
+
+<body>
+    <div id="jsdos" />
+    <script>
+        emulators.pathPrefix = "";
+        Dos(document.getElementById("jsdos"))
+            .run("marsrescue.26.11.2022.jsdos");
+    </script>
+</body>
+
+</html>
