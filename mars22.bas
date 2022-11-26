@@ -1,3 +1,5 @@
+DECLARE SUB showDifficulty ()
+DECLARE SUB chooseDifficulty ()
 DECLARE SUB showScore ()
 DECLARE SUB showYouWon ()
 DECLARE SUB resetPlayer ()
@@ -38,9 +40,9 @@ DIM SHARED skyBG
 DIM SHARED marsFG
 DIM SHARED starsFG
 
-LET skyBG = 0 '  sky
-LET marsFG = 4 ' land
-LET starsFG = 7 ' stars
+skyBG = 0 '  sky
+marsFG = 4 ' land
+starsFG = 7 ' stars
 
 ' ------------------------------------------
 ' game types
@@ -67,6 +69,8 @@ TYPE PLAYERtype
 	life AS INTEGER
 
 	onGround AS INTEGER ' player on ground?
+
+	difficulty AS INTEGER 'how hard is the game? 1 easy 2 medium 3 hard 4 ultra
 END TYPE
 
 TYPE ASTRONAUTtype
@@ -82,16 +86,16 @@ END TYPE
 DIM SHARED MAXASTRONAUTS AS INTEGER ' max astronauts on level
 DIM SHARED ACTIVEASTRONAUTS AS INTEGER ' active astronauts on this level, when 0, go to next level!
 
-MAXASTRONAUTS = 15 'this is very important, will determine max rescue astronauts on screen, affects performance
+MAXASTRONAUTS = 25 'this is very important, will determine max rescue astronauts on screen, affects performance
 
 DIM SHARED player AS PLAYERtype
 DIM SHARED astronauts(MAXASTRONAUTS) AS ASTRONAUTtype
 
 DIM SHARED currentWave ' current wave
 DIM SHARED maxWaves 'when reach this, the game ends
-
+DIM SHARED loopedGame
 maxWaves = 12
-
+loopedGame = 0 ' how many times won the game in this run
 ' ------------------------------------------
 ' HARDWARE SETUP
 ' START THE FUN
@@ -102,9 +106,39 @@ DO ' whole game loop #1
 
 	' intro
 	CALL IntroScreen
+   
+	CALL chooseDifficulty
 
 	CALL initGame
 	currentWave = 0 ' restart game
+
+	' easter egg when looped game
+	IF loopedGame > 0 THEN
+		skyBG = 0 '  sky
+		marsFG = 5 ' land
+		starsFG = 13 ' stars
+	END IF
+
+	IF loopedGame > 1 THEN
+		skyBG = 0 '  sky
+		marsFG = 6 ' land
+		starsFG = 15 ' stars
+	END IF
+
+	IF loopedGame > 2 THEN
+		skyBG = 0 '  sky
+		marsFG = 7 ' land
+		starsFG = 11 ' stars
+	END IF
+   
+	IF loopedGame > 3 THEN
+		skyBG = 0 '  sky
+		marsFG = 2 ' land
+		starsFG = 10 ' stars
+	END IF
+	' -- end easter egg
+
+
 
 	DO ' wave loop #2
 
@@ -121,8 +155,15 @@ DO ' whole game loop #1
 		NEXT
 		PRINT "MISSION #"; currentWave; " OF "; maxWaves
 		PRINT "TRAVELING TO MARS SURFACE!"
-		PRINT USING "MARS CREW ## }"; currentWave + 4
+		PRINT USING "MARS CREW ## }"; currentWave + 3 + player.difficulty
+	   
+		COLOR 10 + player.difficulty
+		LOCATE 22, 1
+		PRINT "Skill: ";
+		CALL showDifficulty
 		PRINT
+	   
+		
 		COLOR 12
 		LOCATE 23, 1
 		PRINT "PLEASE WAIT...FLYING TO ZONE"
@@ -142,7 +183,7 @@ DO ' whole game loop #1
 		CALL setupAstronauts
 
 
-		ACTIVEASTRONAUTS = 4 + currentWave ' ADD MORE EACH WAVE!
+		ACTIVEASTRONAUTS = 3 + currentWave + player.difficulty ' ADD MORE EACH WAVE!
 		IF ACTIVEASTRONAUTS > MAXASTRONAUTS THEN ACTIVEASTRONAUTS = MAXASTRONAUTS
 		
 
@@ -283,7 +324,7 @@ DO ' whole game loop #1
 				COLOR 15
 				LOCATE 1, 1
 				IF player.fuel < 25 OR player.oxygen < 200 THEN COLOR 12 ' low fuel or oxygen
-				PRINT USING ">Fuel####|Oxygen####|Score####|Life##"; player.fuel; player.oxygen; player.score; player.life
+				PRINT USING ">Fuel####|Oxygen####|Score####|Ships##"; player.fuel; player.oxygen; player.score; player.life
 				LOCATE 2, 1
 				COLOR 15
 				IF player.onGround THEN
@@ -336,7 +377,7 @@ DO ' whole game loop #1
 			' check if life less than 0 then game over
 			IF player.life < 0 THEN
 				wannaExit = 1 ' go back to main menu
-				LOCATE 11, 12
+				LOCATE 10, 12
 				COLOR 14
 				PRINT "MISSION FAILED!!"
 				PLAY "mf o1 c c c c p32 d# d d c c b c p32 d# d# d# d# g f f d# d# d d# "
@@ -356,7 +397,7 @@ DO ' whole game loop #1
 			' loop #3
 		LOOP WHILE ACTIVEASTRONAUTS > 0 AND wannaExit <> 1
 
-		IF ACTIVEASTRONAUTS >= MAXASTRONAUTS THEN
+		IF currentWave >= maxWaves AND player.life >= 0 THEN
 			' won the game!
 			CALL showYouWon
 			wannaExit = 1 'restart game anyways
@@ -372,6 +413,52 @@ LOOP ' big game loop of the game itself
 
 '---------- end ------------
 
+SUB chooseDifficulty
+	CLS
+	COLOR 14
+	PRINT "MARS RESCUE"
+	PRINT "==== ======"
+	PRINT
+	PRINT "CHOOSE YOUR DESTINY:"
+	PRINT
+	PRINT "1 - EASY"
+	PRINT "2 - NORMAL"
+	PRINT "3 - HARD"
+	PRINT "4 - BRUTAL"
+	IF loopedGame > 0 THEN
+		COLOR 4
+		PRINT "5 - SICK FUCK"
+	END IF
+	PRINT
+	PRINT
+	PRINT
+	PRINT
+	PLAY "mbl8o2ccdeffa"
+	COLOR 15
+	PRINT "-- PRESS 1 TO 4   --"
+	COLOR 4
+	PRINT "-- OR ESC TO EXIT --"
+	COLOR 15
+
+	player.difficulty = 0
+	DO
+		k$ = waitForKey$
+
+		IF k$ = CHR$(27) THEN CALL exitGame
+		IF k$ = "1" THEN player.difficulty = 1
+		IF k$ = "2" THEN player.difficulty = 2
+		IF k$ = "3" THEN player.difficulty = 3
+		IF k$ = "4" THEN player.difficulty = 4
+		IF k$ = "5" THEN
+			player.difficulty = 5 'secret difficulty
+			COLOR 12
+			LOCATE 10, 1
+			PRINT "5 - SICK FUCK"
+			PLAY "mf o4 cdefgab o5 cdefgab"
+		END IF
+	LOOP WHILE player.difficulty < 1
+END SUB
+
 SUB createMars
 	' creates mars background
 	LINE (0, 0)-(320, 200), skyBG, BF
@@ -383,9 +470,9 @@ SUB createMars
 		PSET (x, y), starsFG
 	NEXT
 
-	LET y = RND * 50 + 100
-	LET y2 = RND * 50 + 100
-	LET segment = 6
+	y = RND * 50 + 100
+	y2 = RND * 50 + 100
+	segment = 6
 
 	FOR x = 0 TO 320 STEP segment
 
@@ -406,7 +493,7 @@ SUB createMars
 	' scan map height
 	FOR x = 0 TO 320
 		FOR y = 99 TO 199
-			LET c = POINT(x, y)
+			c = POINT(x, y)
 			IF c = marsFG THEN
 				mapH(x) = y
 				EXIT FOR
@@ -436,12 +523,14 @@ SUB drawIntroLevel
 		PSET (x, y), 6
 		IF RND * 50 > 40 THEN CIRCLE (x, y), 1, 6
 		IF RND * 50 > 48 THEN CIRCLE (x, y), 2, 6
+		IF RND * 50 > 48 THEN CIRCLE (x, y), 4, 6
 	NEXT
 	' mars crew location on planet
 	x = RND * 100 - 50
 	y = RND * 100 - 50
 	x = 160 - x
 	y = 100 - y
+	LINE (x - 4, y - 4)-(x + 4, y + 4), 12, BF
 	LINE (x - 3, y - 3)-(x + 3, y + 3), 15, B
 	LINE (108, 20)-(x, y - 3), 15
 
@@ -491,7 +580,10 @@ SUB exitGame
 	PRINT "Humans will reach Mars, and I would like to see it happen in my lifetime."
 	COLOR 2
 	PRINT "- Buzz Aldrin"
-
+	PRINT
+	PRINT
+	COLOR 7
+	PRINT "Version v1.25.11.2022 "
 	END
 END SUB
 
@@ -513,7 +605,7 @@ SUB initGame
 END SUB
 
 SUB initLevel
-   
+
 	' draw mars off screen
 	' active page 2,view page 0
 	SCREEN , , 2, 0 ' page 2 has the background in cache
@@ -560,13 +652,14 @@ SUB IntroScreen
 	PRINT "USE ARROW KEYS TO FIRE THRUSTERS"
 	PRINT "YOU CAN ALSO USE A,S,D,W"
 	COLOR 12
+	PRINT "MONITOR YOUR DX,DY VECTOR FOR SAFETY"
 	PRINT "DO NOT COLLIDE AGAINST MARS SURFACE"
 	COLOR 10
 	PRINT "RESCUE ALL THE ASTRONAUTS!"
 
 	COLOR 14
 
-	PRINT
+	
 	PRINT
 	PRINT
 
@@ -693,23 +786,30 @@ SUB moveAstronauts
 END SUB
 
 SUB resetPlayer
+	IF player.difficulty < 1 THEN player.difficulty = 1
+   
 	' player reset for level OR LIFE LOSS
 	player.x = 160
 	player.y = 0
 	player.dx = 0
 	player.dy = 0
-	player.fuel = 250
-	player.oxygen = 1500
+	player.fuel = 400 / player.difficulty
+	player.oxygen = 2000 / player.difficulty
 	player.onGround = 0 ' not on ground
 
-	' GET READY MESSAGE
-	' SHOWN WHEN STARTING LEVEL OR LOSING A LIFE
-	LOCATE 10, 15
-	COLOR 10
-	PRINT "GET READY!"
-	idle = TIMER
-	WHILE ABS(TIMER - idle) < 1
-	WEND
+	IF player.life >= 0 THEN 'only if alive
+		' GET READY MESSAGE
+		' SHOWN WHEN STARTING LEVEL OR LOSING A LIFE
+		LOCATE 10, 10 ' erase previous messages on same line
+		PRINT "                    "
+
+		LOCATE 10, 15
+		COLOR 10
+		PRINT "GET READY!"
+		idle = TIMER
+		WHILE ABS(TIMER - idle) < 1
+		WEND
+	END IF
 END SUB
 
 SUB setupAstronauts
@@ -725,6 +825,24 @@ SUB setupAstronauts
 	ACTIVEASTRONAUTS = MAXASTRONAUTS
 END SUB
 
+SUB showDifficulty
+	SELECT CASE player.difficulty
+	CASE 1
+		PRINT "EASY";
+	CASE 2
+		PRINT "NORMAL";
+	CASE 3
+	   PRINT "HARD";
+	CASE 4
+		PRINT "BRUTAL";
+	CASE 5
+		 PRINT "SICK FUCK";
+	CASE ELSE
+		PRINT "CHEAT";
+	END SELECT
+
+END SUB
+
 SUB showScore
 	' shows final score, but only when the mission is a failure
 	' not for winning the game
@@ -736,14 +854,21 @@ SUB showScore
 	PRINT
 	PRINT "Score: "; player.score
 	PRINT "Wave : "; currentWave
+	PRINT "Skill: ";
+	CALL showDifficulty
+	PRINT
 	PRINT
 	COLOR 7
 	PRINT "Fate has ordained that the men who went to mars to explore in peace,will stay on mars to rest in peace."
 	PRINT "- Dwayne Elizondo Mountain Dew Camacho"
 	PRINT
+	IF loopedGame > 0 THEN 'easter egg
+		COLOR 8
+		PRINT "Go touch some grass... :P"
+	ELSE
+		PRINT
+	END IF
 
-
-	PRINT
 	PRINT
 	PRINT
 
@@ -753,9 +878,7 @@ SUB showScore
 	COLOR 4
 	PRINT "-- OR ESC TO EXIT           --"
 	COLOR 15
-   
-	
-
+  
 	k$ = waitForKey$
 
 	IF k$ = CHR$(27) THEN CALL exitGame
@@ -763,20 +886,41 @@ SUB showScore
 END SUB
 
 SUB showYouWon
+	' won the game!
+	loopedGame = loopedGame + 1
+
 	' show when you won the game
 	CLS
 	COLOR 14
 	PRINT "CONGRATULATIONS!!"
 	PRINT "YOU RESCUED ALL THE COLONY!!"
+	PRINT
 	COLOR 15
 	PRINT "WE ARE THE CHAMPIONS!"
+	PRINT "== === === =========="
+	PRINT
 	PRINT "Score: "; player.score
 	PRINT "Wave : "; currentWave
+	PRINT "Skill: ";
+	CALL showDifficulty
 	PRINT
+	PRINT "Loop: "; loopedGame
+	IF loopedGame > 1 THEN 'easter egg
+		COLOR 13
+		PRINT "Go touch some grass... :D"
+	ELSE
+		PRINT
+	END IF
+	
 	COLOR 7
 	PRINT "The first human beings to land on Mars  should not come back to Earth. They     should be the beginning of a build-up of a settlement, I call it a permanence.  - Buzz Aldrin"
 	PRINT
 
+	'easter egg
+	IF player.difficulty < 5 THEN
+		COLOR 12
+		PRINT "For a challenge, press 5 on destiny."
+	END IF
 
 	PRINT
 	PRINT
@@ -788,9 +932,7 @@ SUB showYouWon
 	COLOR 4
 	PRINT "-- OR ESC TO EXIT           --"
 	COLOR 15
-  
-   
-
+ 
 	k$ = waitForKey$
 
 	IF k$ = CHR$(27) THEN CALL exitGame
@@ -805,7 +947,7 @@ FUNCTION waitForKey$
    
 	' real wait
 	DO
-		k$ = INKEY$
+		k$ = UCASE$(INKEY$)
 	LOOP UNTIL k$ <> ""
 
 	waitForKey$ = k$
