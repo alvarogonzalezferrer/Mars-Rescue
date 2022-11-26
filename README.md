@@ -8,6 +8,14 @@ https://itch.io/jam/lostcartridgejam4
 
 Recruiters, I'm available for remote work! Check me: https://github.com/alvarogonzalezferrer
 
+## Screenshoots
+
+![Screenshoot](/docs/01.jpg)
+
+![Screenshoot](/docs/02.jpg)
+
+![Screenshoot](/docs/03.jpg)
+
 ## Notes
 
 - Created in around 16 hours of work
