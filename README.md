@@ -20,7 +20,11 @@ All comments are welcome, I hope you have a great week!
 
 ## Support me and play online
 
+Leave a review, or drop a tip here, you can also play and enjoy the game:
+
 https://kronoman.itch.io/mars-rescue
+
+Or play online here too (updated less often)
 
 https://alvarogonzalezferrer.github.io/Mars-Rescue/
 
