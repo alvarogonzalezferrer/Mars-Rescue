@@ -647,7 +647,7 @@ SUB exitGame
     PRINT
     PRINT
     COLOR 7
-    PRINT "Version v1.25.11.2022 "
+    PRINT "Version v1.26.11.2022 "
     END
 END SUB
 
