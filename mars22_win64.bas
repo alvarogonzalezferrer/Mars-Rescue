@@ -17,7 +17,6 @@ DECLARE SUB exitGame ()
 ' ------------------------------------------
 ' MARS RESCUE
 ' ------------------------------------------
-' GAME FOR "LOST CARTRIDGE" JAM
 ' BY KRONOMAN - COPYRIGHT (C) 2022
 ' ------------------------------------------
 ' SOURCE CODE FOR QBASIC - MSDOS

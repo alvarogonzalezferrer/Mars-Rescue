@@ -1,8 +1,22 @@
 # Mars Rescue
 
-Game created for the *Lost Cartridge Jam*: an annual game jam where game designers, writers, composers, programmers and other creatives from all over the world spend 72 hours creating a Lost Cartridge Game from scratch. 
+I am very pleased to announce that in just two days (relaxed, around 8 hours per day), I managed to make a complete game from scratch.
 
-https://itch.io/jam/lostcartridgejam4
+It’s super retro, and it was made for game jam 2022, with tech like it was 1989 :P
+
+I hope you enjoy it a lot!
+
+The source code is available, fully commented and easy to read, it can be used to learn, or study too!
+
+It’s interesting that the whole game is a single code file, there are no external resources or bloated libraries or anything like that.
+
+I generate everything procedurally in the same code.
+
+There are also some old-school tricks to make the graphics work, like flipping pages, and using few colors, among other details.
+
+Timing for modern CPUs with old QBasic was also a challenge.
+
+All comments are welcome, I hope you have a great week!
 
 ## Play online
 
