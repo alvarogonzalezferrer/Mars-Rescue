@@ -18,7 +18,7 @@ DECLARE SUB exitGame ()
 ' ------------------------------------------
 ' BY KRONOMAN - COPYRIGHT (C) 2022
 ' ------------------------------------------
-' SOURCE CODE FOR QB64 FOR WINDOWS 
+' SOURCE CODE FOR QB64 FOR WINDOWS
 ' https://qb64.com/
 ' ------------------------------------------
 ' Some tech info:
@@ -138,7 +138,7 @@ SCREEN 7
 _FULLSCREEN
 IF _FULLSCREEN = 0 THEN _FULLSCREEN _OFF 'check that a full screen mode initialized
 _TITLE "Mars Rescue by Krono"
-' DEBUG : add icon!
+$EXEICON:'./marsrescue.ico'
 ' end QB64 stuff
 ' ------------------------------------------
 
